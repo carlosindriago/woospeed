@@ -134,10 +134,70 @@ class WooSpeed_Analytics
             $count = $this->seed_wc_products(20);
         } elseif ($action === 'orders_50') {
             $count = $this->seed_wc_orders(50);
+        } elseif ($action === 'clear_all') {
+            $count = $this->clear_dummy_data();
+            wp_redirect(admin_url("admin.php?page=woospeed-generator&cleared=true&count=$count"));
+            exit;
         }
 
         wp_redirect(admin_url("admin.php?page=woospeed-generator&seeded=true&type=$action&count=$count"));
         exit;
+    }
+
+    // 🧹 CLEANER: Borra todo lo generado
+    private function clear_dummy_data()
+    {
+        global $wpdb;
+        $count = 0;
+
+        // 1. Borrar Tabla Plana (Solo IDs altos dummy)
+        $deleted_rows = $wpdb->query("DELETE FROM $this->table_name WHERE order_id >= 9000000");
+        $count += $deleted_rows;
+
+        // 2. Borrar Productos Dummy (Meta Tag + Legacy Pattern)
+        $dummy_products = wc_get_products([
+            'limit' => -1,
+            'meta_key' => '_woospeed_dummy',
+            'meta_value' => 'yes',
+            'return' => 'ids'
+        ]);
+
+        // Backup: Buscar por nombre si no tienen meta (Legacy)
+        if (empty($dummy_products)) {
+            $legacy_products = $wpdb->get_col("SELECT ID FROM {$wpdb->posts} WHERE post_type = 'product' AND post_title LIKE 'Producto Demo Speed #%'");
+            $dummy_products = array_merge($dummy_products, $legacy_products);
+        }
+
+        foreach ($dummy_products as $pid) {
+            wp_delete_post($pid, true);
+            $count++;
+        }
+
+        // 3. Borrar Órdenes Dummy (Meta Tag + Legacy Email Pattern)
+        $dummy_orders = wc_get_orders([
+            'limit' => -1,
+            'meta_key' => '_woospeed_dummy',
+            'meta_value' => 'yes',
+            'return' => 'ids'
+        ]);
+
+        // Backup: Buscar por email (Legacy)
+        if (empty($dummy_orders)) {
+            // Buscamos ordenes donde el billing_email empiece con testuser
+            $legacy_orders = $wpdb->get_col("
+                SELECT post_id FROM {$wpdb->postmeta} 
+                WHERE meta_key = '_billing_email' 
+                AND meta_value LIKE 'testuser%@example.com'
+            ");
+            $dummy_orders = array_merge($dummy_orders, $legacy_orders);
+        }
+
+        foreach ($dummy_orders as $oid) {
+            wp_delete_post($oid, true);
+            $count++;
+        }
+
+        return $count;
     }
 
     // 1. Generador Analytics (SQL Directo)
@@ -172,6 +232,7 @@ class WooSpeed_Analytics
             $product->set_description("Descripción generada automáticamente para pruebas de carga.");
             $product->set_short_description("Producto de prueba.");
             $product->set_status("publish");
+            $product->add_meta_data('_woospeed_dummy', 'yes', true); // Tag para borrado fácil
             $product->save();
             $count++;
         }
@@ -314,6 +375,15 @@ class WooSpeed_Analytics
                 </div>
             <?php endif; ?>
 
+            <?php if (isset($_GET['cleared'])): ?>
+                <div class="notice notice-warning is-dismissible">
+                    <p>
+                        🧹 Limpieza Completada:
+                        Se han eliminado <b><?php echo esc_html($_GET['count']); ?></b> registros de prueba.
+                    </p>
+                </div>
+            <?php endif; ?>
+
             <div style="display: flex; gap: 20px; margin-top: 20px;">
                 <!-- Card 1 -->
                 <div
@@ -354,6 +424,19 @@ class WooSpeed_Analytics
             <div style="margin-top: 20px;">
                 <p><i>Nota: Las órdenes reales aparecerán en "WooCommerce > Pedidos" y se sincronizarán automáticamente con el
                         Dashboard de Speed Analytics.</i></p>
+            </div>
+
+            <!-- Danger Zone -->
+            <div
+                style="margin-top: 30px; background: #fff; padding: 20px; border: 1px solid #dc3232; box-shadow: 0 1px 2px rgba(0,0,0,.05); border-left-width: 4px;">
+                <h3 style="color: #dc3232; margin-top:0;">⚠️ Zona de Limpieza</h3>
+                <p>Borra TODOS los datos generados por este plugin (Tabla Plana, Productos Dummy, Órdenes Dummy).</p>
+                <a href="<?php echo admin_url('admin.php?page=woospeed-generator&seed_action=clear_all'); ?>"
+                    class="button button-link-delete"
+                    style="color: #a00; text-decoration: none; border: 1px solid #dc3232; padding: 5px 10px; border-radius: 3px;"
+                    onclick="return confirm('¿ESTÁS SEGURO? Esto borrará todos los datos de prueba generados.');">
+                    🗑️ BORRAR TODOS LOS DATOS DUMMY
+                </a>
             </div>
         </div>
         <?php

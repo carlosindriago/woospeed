@@ -39,8 +39,9 @@ Instead of using heavy abstraction layers (ORM), pure prepared SQL queries (`$wp
 1. Navigate to **WooCommerce > Speed Analytics**.
 2. **First Run:** The dashboard will be empty.
 3. **Generate Dummy Data:**
-   - Click the "🛠 Generar Datos de Prueba" button to insert 5000 simulated sales records.
-   - This bypasses the need to manually create orders for testing the performance.
+   - Click the "🛠 Generar Datos de Prueba" button in the Generator tab.
+   - You can create Analytics data (SQL), real Products, or real Orders.
+   - Use the **Red "Clear Data" button** to remove all generated test data.
 4. View the real-time graph generated in milliseconds.
 
 ## 📂 File Structure
