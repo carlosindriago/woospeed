@@ -424,36 +424,31 @@ class WooSpeed_Analytics
             </div>
 
             <div style="display: flex; gap: 20px; margin-top: 20px;">
-                <!-- Card 1: Masiva Real -->
-                <div
-                    style="flex: 1; background: #fff; padding: 20px; border: 1px solid #ccd0d4; box-shadow: 0 1px 2px rgba(0,0,0,.05); border-top: 4px solid #007cba;">
-                    <h3>1. Simulación Real Masiva</h3>
-                    <p>Genera <b>5,000 Pedidos Reales</b> en tandas. <br>Refleja una carga real en WooCommerce y Speed
-                        Analytics.</p>
+                <!-- Card 1: Productos (Paso 1) -->
+                <div style="flex: 1; background: #fff; padding: 20px; border: 1px solid #ccd0d4; box-shadow: 0 1px 2px rgba(0,0,0,.05); border-top: 4px solid #F5B041;">
+                    <h3>1. Primero: Productos Dummy</h3>
+                    <p>Genera <b>20 Productos Reales</b>. Es <b>obligatorio</b> tener productos antes de simular ventas.</p>
+                    <a href="<?php echo admin_url('admin.php?page=woospeed-generator&seed_action=products_20'); ?>" class="button button-secondary" style="width:100%; margin-top:10px;" onclick="return confirm('¿Crear 20 Productos Reales?');">
+                        📦 Generar Productos (Paso 1)
+                    </a>
+                    <p style="font-size: 11px; color: #666; margin-top: 5px;">* Las órdenes usarán estos productos.</p>
+                </div>
+
+                <!-- Card 2: Masiva (Paso 2) -->
+                <div style="flex: 1; background: #fff; padding: 20px; border: 1px solid #ccd0d4; box-shadow: 0 1px 2px rgba(0,0,0,.05); border-top: 4px solid #007cba;">
+                    <h3>2. Segundo: Carga Masiva (5k)</h3>
+                    <p>Genera <b>5,000 Pedidos Reales</b> usando los productos del paso 1. <br>Refleja una carga real.</p>
                     <button id="btn-start-batch" class="button button-primary" style="width:100%; margin-top:10px;">
-                        🚀 Iniciar Carga Masiva (5,000)
+                        🚀 Iniciar Carga Masiva (Paso 2)
                     </button>
                     <p style="font-size: 11px; color: #666; margin-top: 5px;">* Se ejecutará en 10 tandas de 500.</p>
                 </div>
 
-                <!-- Card 2 -->
-                <div
-                    style="flex: 1; background: #fff; padding: 20px; border: 1px solid #ccd0d4; box-shadow: 0 1px 2px rgba(0,0,0,.05);">
-                    <h3>2. Productos Dummy</h3>
-                    <p>Crea 20 productos simples reales para poblar la tienda (necesarios para los pedidos).</p>
-                    <a href="<?php echo admin_url('admin.php?page=woospeed-generator&seed_action=products_20'); ?>"
-                        class="button button-secondary" onclick="return confirm('¿Crear 20 Productos Reales?');">
-                        📦 Generar 20 Productos
-                    </a>
-                </div>
-
                 <!-- Card 3 -->
-                <div
-                    style="flex: 1; background: #fff; padding: 20px; border: 1px solid #ccd0d4; box-shadow: 0 1px 2px rgba(0,0,0,.05);">
+                <div style="flex: 1; background: #fff; padding: 20px; border: 1px solid #ccd0d4; box-shadow: 0 1px 2px rgba(0,0,0,.05);">
                     <h3>3. Test Rápido (50)</h3>
-                    <p>Prueba rápida de sincronización con 50 pedidos.</p>
-                    <a href="<?php echo admin_url('admin.php?page=woospeed-generator&seed_action=orders_50'); ?>"
-                        class="button button-secondary" onclick="return confirm('¿Crear 50 Pedidos Reales?');">
+                    <p>Prueba rápida de sincronización con 50 pedidos (opcional).</p>
+                    <a href="<?php echo admin_url('admin.php?page=woospeed-generator&seed_action=orders_50'); ?>" class="button button-secondary" onclick="return confirm('¿Crear 50 Pedidos Reales?');">
                         🛒 Generar 50 Pedidos
                     </a>
                 </div>
