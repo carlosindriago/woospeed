@@ -30,6 +30,11 @@ Native WooCommerce performs multiple JOINs on the `wp_postmeta` table (key-value
 ### Optimized Raw SQL Queries
 Instead of using heavy abstraction layers (ORM), pure prepared SQL queries (`$wpdb->prepare`) are used for maximum speed and security.
 
+### ⚡ Performance Optimizations (v1.2.0)
+- **Bulk Inserts:** Analytics seeding uses batched INSERTs (100 rows/query) reducing DB round-trips by 99%.
+- **Email Suppression:** WooCommerce emails are disabled during dummy order generation to prevent spam.
+- **Smart Tagging:** All dummy orders/products are tagged with `_woospeed_dummy` for reliable cleanup.
+
 ## 🚀 Installation
 
 1. Clone this repository into your `wp-content/plugins/` directory:

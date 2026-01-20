@@ -2,7 +2,7 @@
 /*
 Plugin Name: WooSpeed Analytics 🚀
 Description: Herramienta para WooCommerce con arquitectura de alto rendimiento para generar reportes en 0.01s usando Tablas Planas y Raw SQL.
-Version: 1.1.0
+Version: 1.2.0
 Author: Carlos Indriago
 */
 
@@ -218,23 +218,26 @@ class WooSpeed_Analytics
         return $count;
     }
 
-    // 1. Generador Analytics (SQL Directo)
+    // 1. Generador Analytics (SQL Directo) - OPTIMIZADO con Bulk Insert
     private function seed_analytics_data($limit)
     {
         global $wpdb;
+        $values = [];
+        $batch_size = 100; // Insertar de 100 en 100
+
         for ($i = 0; $i < $limit; $i++) {
             $days_ago = rand(0, 60);
             $date = date('Y-m-d', strtotime("-$days_ago days"));
             $total = rand(20, 300) + (rand(0, 99) / 100);
-            $order_id = 9000000 + $i; // ID muy alto para no conflictuar
+            $order_id = 9000000 + $i;
 
-            $wpdb->query($wpdb->prepare(
-                "INSERT IGNORE INTO $this->table_name (order_id, order_total, report_date) 
-                 VALUES (%d, %f, %s)",
-                $order_id,
-                $total,
-                $date
-            ));
+            $values[] = $wpdb->prepare("(%d, %f, %s)", $order_id, $total, $date);
+
+            // Ejecutar batch cada 100 registros o al final
+            if (count($values) >= $batch_size || $i === $limit - 1) {
+                $wpdb->query("INSERT IGNORE INTO $this->table_name (order_id, order_total, report_date) VALUES " . implode(',', $values));
+                $values = []; // Reset para el siguiente batch
+            }
         }
         return $limit;
     }
@@ -257,12 +260,15 @@ class WooSpeed_Analytics
         return $count;
     }
 
-    // 3. Generador Órdenes Reales (Dispara Hooks)
+    // 3. Generador Órdenes Reales (Dispara Hooks) - OPTIMIZADO
     private function seed_wc_orders($limit)
     {
         $products = wc_get_products(['limit' => 10, 'status' => 'publish']);
         if (empty($products))
             return 0;
+
+        // 🔇 Suprimir emails durante seeding
+        add_filter('woocommerce_email_enabled', '__return_false');
 
         $count = 0;
         for ($i = 0; $i < $limit; $i++) {
@@ -295,10 +301,17 @@ class WooSpeed_Analytics
             $order->set_address($address, 'billing');
             $order->calculate_totals();
 
+            // 🏷️ Tag para limpieza fácil
+            $order->add_meta_data('_woospeed_dummy', 'yes', true);
+
             // Marcar como completada dispara el hook 'woospeed-analytics' automáticamente
             $order->update_status('completed', 'Orden de prueba generada automáticamente.');
             $count++;
         }
+
+        // 🔊 Restaurar emails
+        remove_filter('woocommerce_email_enabled', '__return_false');
+
         return $count;
     }
 
