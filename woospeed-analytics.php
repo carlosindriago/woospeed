@@ -1,9 +1,9 @@
 <?php
 /*
 Plugin Name: WooSpeed Analytics 🚀
-Description: Demostración de Arquitectura de Alto Rendimiento. Reportes en 0.01s usando Tablas Planas y Raw SQL.
+Description: Herramienta para WooCommerce con arquitectura de alto rendimiento para generar reportes en 0.01s usando Tablas Planas y Raw SQL.
 Version: 1.1.0
-Author: Tu Nombre (The Senior Candidate)
+Author: Carlos Indriago
 */
 
 if (!defined('ABSPATH'))
@@ -385,31 +385,31 @@ class WooSpeed_Analytics
             </div>
 
             <script>
-                document.addEventListener('DOMContentLoaded', fun                       ction() {
+                document.addEventListener('DOMContentLoaded', function () {
                     const ctx = document.getElementById('speedChart').getContext('2d');
                     fetch(ajaxurl + '?action=woospeed_get_data')
-                    .then(res => res.json())
-                    .then(response => {
-                        if (!response.success) return;
-                        const data = response.data;
-                        new Chart(ctx, {
-                            type: 'line',
-                            data: {
-                                labels: data.map(d => d.report_date),
-                                datasets: [{
-                                    label: 'Ingresos Totales ($)',
-                                    data: data.map(d => d.total_sales),
-                                    borderColor: '#007cba',
-                                    backgroundColor: 'rgba(0, 124, 186, 0.1)',
-                                    borderWidth: 2,
-                                    fill: true,
-                                    tension: 0.3
-                                }]
-                            },
-                            options: { responsive: true, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } } }
+                        .then(res => res.json())
+                        .then(response => {
+                            if (!response.success) return;
+                            const data = response.data;
+                            new Chart(ctx, {
+                                type: 'line',
+                                data: {
+                                    labels: data.map(d => d.report_date),
+                                    datasets: [{
+                                        label: 'Ingresos Totales ($)',
+                                        data: data.map(d => d.total_sales),
+                                        borderColor: '#007cba',
+                                        backgroundColor: 'rgba(0, 124, 186, 0.1)',
+                                        borderWidth: 2,
+                                        fill: true,
+                                        tension: 0.3
+                                    }]
+                                },
+                                options: { responsive: true, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } } }
+                            });
                         });
-                    });
-                                });
+                });
             </script>
         </div>
         <?php
