@@ -145,67 +145,79 @@ class WooSpeed_Analytics
 
     public function render_admin_page()
     {
+        global $wpdb;
+        $start_time = microtime(true);
+        $total_orders = $wpdb->get_var("SELECT COUNT(*) FROM $this->table_name");
+        $query_time = number_format(microtime(true) - $start_time, 5);
         ?>
-        <div class="wrap">
-            <h1>🚀 WooCommerce High-Performance Analytics</h1>
-            <p>Dashboard demostrativo usando <b>Arquitectura de Tabla Plana</b>. Tiempo de consulta: < 0.05s.</p>
-
-                    <?php if (isset($_GET['seeded'])): ?>
-                        <div class="notice notice-success is-dismissible">
-                            <p>✅ ¡Datos dummy generados exitosamente!</p>
-                        </div>
-                    <?php endif; ?>
-
-                    <a href="<?php echo admin_url('admin.php?page=woospeed-analytics&seed=1'); ?>"
-                        class="button button-secondary" onclick="return confirm('¿Generar 5000 ventas falsas?');">
-                        🛠 Generar Datos de Prueba
-                    </a>
-
-                    <div
-                        style="margin-top: 20px; background: white; padding: 20px; border: 1px solid #ccd0d4; box-shadow: 0 1px 1px rgba(0,0,0,.04);">
-                        <canvas id="speedChart" height="100"></canvas>
+                <div class="wrap">
+                    <h1>🚀 WooCommerce High-Performance Analytics</h1>
+                    <div style="background: #fff; border-left: 4px solid #007cba; padding: 12px 15px; margin: 15px 0; box-shadow: 0 1px 1px rgba(0,0,0,0.04);">
+                        <p style="margin: 0; font-size: 14px; color: #3c434a;">
+                            <b>Estado del Sistema:</b> Arquitectura de Tabla Plana Activa. <br>
+                            <span style="display: inline-block; margin-top: 5px;">
+                                📊 Ventas Procesadas: <b><?php echo number_format($total_orders); ?></b> | 
+                                ⚡ Tiempo de Consulta SQL: <b><?php echo $query_time; ?>s</b>
+                            </span>
+                        </p>
                     </div>
 
-                    <script>
-                        document.addEventListener('DOMContentLoaded', function () {
-                            const ctx = document.getElementById('speedChart').getContext('2d');
+                            <?php if (isset($_GET['seeded'])): ?>
+                                    <div class="notice notice-success is-dismissible">
+                                        <p>✅ ¡Datos dummy generados exitosamente!</p>
+                                    </div>
+                            <?php endif; ?>
 
-                            fetch(ajaxurl + '?action=woospeed_get_data')
-                                .then(res => res.json())
-                                .then(response => {
-                                    if (!response.success) return alert('Error API');
+                            <a href="<?php echo admin_url('admin.php?page=woospeed-analytics&seed=1'); ?>"
+                                class="button button-secondary" onclick="return confirm('¿Generar 5000 ventas falsas?');">
+                                🛠 Generar Datos de Prueba
+                            </a>
 
-                                    const data = response.data;
-                                    if (data.length === 0) {
-                                        alert("No hay datos. ¡Usa el botón 'Generar Datos de Prueba'!");
-                                        return;
-                                    }
+                            <div
+                                style="margin-top: 20px; background: white; padding: 20px; border: 1px solid #ccd0d4; box-shadow: 0 1px 1px rgba(0,0,0,.04);">
+                                <canvas id="speedChart" height="100"></canvas>
+                            </div>
 
-                                    new Chart(ctx, {
-                                        type: 'line',
-                                        data: {
-                                            labels: data.map(d => d.report_date),
-                                            datasets: [{
-                                                label: 'Ingresos Totales ($)',
-                                                data: data.map(d => d.total_sales),
-                                                borderColor: '#007cba',
-                                                backgroundColor: 'rgba(0, 124, 186, 0.1)',
-                                                borderWidth: 2,
-                                                fill: true,
-                                                tension: 0.3
-                                            }]
-                                        },
-                                        options: {
-                                            responsive: true,
-                                            plugins: { legend: { position: 'top' } },
-                                            scales: { y: { beginAtZero: true } }
-                                        }
-                                    });
+                            <script>
+                                document.addEventListener('DOMContentLoaded', function () {
+                                    const ctx = document.getElementById('speedChart').getContext('2d');
+
+                                    fetch(ajaxurl + '?action=woospeed_get_data')
+                                        .then(res => res.json())
+                                        .then(response => {
+                                            if (!response.success) return alert('Error API');
+
+                                            const data = response.data;
+                                            if (data.length === 0) {
+                                                alert("No hay datos. ¡Usa el botón 'Generar Datos de Prueba'!");
+                                                return;
+                                            }
+
+                                            new Chart(ctx, {
+                                                type: 'line',
+                                                data: {
+                                                    labels: data.map(d => d.report_date),
+                                                    datasets: [{
+                                                        label: 'Ingresos Totales ($)',
+                                                        data: data.map(d => d.total_sales),
+                                                        borderColor: '#007cba',
+                                                        backgroundColor: 'rgba(0, 124, 186, 0.1)',
+                                                        borderWidth: 2,
+                                                        fill: true,
+                                                        tension: 0.3
+                                                    }]
+                                                },
+                                                options: {
+                                                    responsive: true,
+                                                    plugins: { legend: { position: 'top' } },
+                                                    scales: { y: { beginAtZero: true } }
+                                                }
+                                            });
+                                        });
                                 });
-                        });
-                    </script>
-        </div>
-        <?php
+                            </script>
+                </div>
+                <?php
     }
 }
 
