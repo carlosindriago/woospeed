@@ -22,6 +22,11 @@ Native WooCommerce performs multiple JOINs on the `wp_postmeta` table (key-value
 - Uses the `woocommerce_order_status_completed` hook to intercept the order at the moment of completion.
 - Relevant data is denormalized and inserted into the flat table.
 
+### 🔄 Smart Lifecycle Management
+- **Automatic Cleanup:** Listens to `woocommerce_order_status_changed`.
+- If an order is **cancelled, refunded, or failed**, it is immediately removed from the analytics table to prevent reporting errors (false positives).
+- If reactivated, it re-syncs automatically.
+
 ### Optimized Raw SQL Queries
 Instead of using heavy abstraction layers (ORM), pure prepared SQL queries (`$wpdb->prepare`) are used for maximum speed and security.
 
