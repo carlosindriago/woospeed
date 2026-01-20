@@ -2,7 +2,7 @@
 /*
 Plugin Name: WooSpeed Analytics 🚀
 Description: Demostración de Arquitectura de Alto Rendimiento. Reportes en 0.01s usando Tablas Planas y Raw SQL.
-Version: 1.0.0
+Version: 1.1.0
 Author: Tu Nombre (The Senior Candidate)
 */
 
@@ -39,9 +39,8 @@ class WooSpeed_Analytics
         // 3. API Interna (AJAX)
         add_action('wp_ajax_woospeed_get_data', [$this, 'get_chart_data']);
 
-        // 4. TRUCO DE SENSEI: Seeder de Datos Dummy (Solo para admin)
-        // Se ejecuta si visitas: wp-admin/admin.php?page=woospeed-analytics&seed=1
-        add_action('admin_init', [$this, 'seed_dummy_data']);
+        // 4. Seeder Handlers
+        add_action('admin_init', [$this, 'handle_seed_actions']);
     }
 
     // 🏗️ ARQUITECTURA: Tabla Plana Optimizada
@@ -65,7 +64,6 @@ class WooSpeed_Analytics
     }
 
     // 🔄 SYNC: El corazón del patrón CQRS
-    // Copia datos de la "Write DB" (WooCommerce) a la "Read DB" (Nuestra tabla)
     public function sync_order($order_id)
     {
         global $wpdb;
@@ -86,40 +84,144 @@ class WooSpeed_Analytics
         ));
     }
 
-    // 🧪 SEEDER: Generador de Datos Falsos (Para presumir el gráfico)
-    public function seed_dummy_data()
+    // 🎨 FRONTEND: Nueva Estructura de Menú
+    public function add_admin_menu()
     {
-        if (isset($_GET['page']) && $_GET['page'] == 'woospeed-analytics' && isset($_GET['seed']) && current_user_can('manage_options')) {
-            global $wpdb;
-            // Insertamos 5000 ventas simuladas en los últimos 60 días
-            for ($i = 0; $i < 5000; $i++) {
-                $days_ago = rand(0, 60);
-                $date = date('Y-m-d', strtotime("-$days_ago days"));
-                $total = rand(20, 300) + (rand(0, 99) / 100); // Precio aleatorio con decimales
-                $order_id = 900000 + $i; // IDs falsos altos para no chocar
+        add_menu_page(
+            'WooSpeed Analytics',
+            'Speed Analytics',
+            'manage_woocommerce',
+            'woospeed-dashboard',
+            [$this, 'render_dashboard'],
+            'dashicons-chart-area',
+            58
+        );
 
-                $wpdb->query($wpdb->prepare(
-                    "INSERT IGNORE INTO $this->table_name (order_id, order_total, report_date) 
-                     VALUES (%d, %f, %s)",
-                    $order_id,
-                    $total,
-                    $date
-                ));
-            }
-            // Redireccionar para evitar re-envío y mostrar mensaje
-            wp_redirect(admin_url('admin.php?page=woospeed-analytics&seeded=true'));
-            exit;
-        }
+        add_submenu_page(
+            'woospeed-dashboard',
+            'Dashboard',
+            'Dashboard',
+            'manage_woocommerce',
+            'woospeed-dashboard',
+            [$this, 'render_dashboard']
+        );
+
+        add_submenu_page(
+            'woospeed-dashboard',
+            'Generador de Datos',
+            'Generador de Datos',
+            'manage_woocommerce',
+            'woospeed-generator',
+            [$this, 'render_generator_page']
+        );
     }
 
-    // 🚀 QUERY ENGINE: SQL Crudo y Rápido
+    // ⚙️ SEEDER HANDLER
+    public function handle_seed_actions()
+    {
+        if (!isset($_GET['page']) || !isset($_GET['seed_action']) || !current_user_can('manage_options'))
+            return;
+
+        $action = $_GET['seed_action'];
+        $count = 0;
+
+        // Aumentar tiempo de ejecución para generaciones grandes
+        set_time_limit(300);
+
+        if ($action === 'analytics_5k') {
+            $count = $this->seed_analytics_data(5000);
+        } elseif ($action === 'products_20') {
+            $count = $this->seed_wc_products(20);
+        } elseif ($action === 'orders_50') {
+            $count = $this->seed_wc_orders(50);
+        }
+
+        wp_redirect(admin_url("admin.php?page=woospeed-generator&seeded=true&type=$action&count=$count"));
+        exit;
+    }
+
+    // 1. Generador Analytics (SQL Directo)
+    private function seed_analytics_data($limit)
+    {
+        global $wpdb;
+        for ($i = 0; $i < $limit; $i++) {
+            $days_ago = rand(0, 60);
+            $date = date('Y-m-d', strtotime("-$days_ago days"));
+            $total = rand(20, 300) + (rand(0, 99) / 100);
+            $order_id = 9000000 + $i; // ID muy alto para no conflictuar
+
+            $wpdb->query($wpdb->prepare(
+                "INSERT IGNORE INTO $this->table_name (order_id, order_total, report_date) 
+                 VALUES (%d, %f, %s)",
+                $order_id,
+                $total,
+                $date
+            ));
+        }
+        return $limit;
+    }
+
+    // 2. Generador Productos Reales
+    private function seed_wc_products($limit)
+    {
+        $count = 0;
+        for ($i = 0; $i < $limit; $i++) {
+            $product = new WC_Product_Simple();
+            $product->set_name("Producto Demo Speed #" . rand(1000, 9999));
+            $product->set_regular_price(rand(10, 100));
+            $product->set_description("Descripción generada automáticamente para pruebas de carga.");
+            $product->set_short_description("Producto de prueba.");
+            $product->set_status("publish");
+            $product->save();
+            $count++;
+        }
+        return $count;
+    }
+
+    // 3. Generador Órdenes Reales (Dispara Hooks)
+    private function seed_wc_orders($limit)
+    {
+        $products = wc_get_products(['limit' => 10, 'status' => 'publish']);
+        if (empty($products))
+            return 0;
+
+        $count = 0;
+        for ($i = 0; $i < $limit; $i++) {
+            $order = wc_create_order();
+            // Agregar 1-3 productos al azar
+            for ($j = 0; $j < rand(1, 3); $j++) {
+                $random_product = $products[array_rand($products)];
+                $order->add_product($random_product, rand(1, 3));
+            }
+            // Dirección Dummy
+            $address = [
+                'first_name' => 'Test',
+                'last_name' => 'User ' . $i,
+                'email' => "testuser$i@example.com",
+                'phone' => '555-0123',
+                'address_1' => '123 Fake St',
+                'city' => 'Tech City',
+                'state' => 'CA',
+                'postcode' => '90210',
+                'country' => 'US'
+            ];
+            $order->set_address($address, 'billing');
+            $order->calculate_totals();
+
+            // Marcar como completada dispara el hook 'woospeed-analytics' automáticamente
+            $order->update_status('completed', 'Orden de prueba generada automáticamente.');
+            $count++;
+        }
+        return $count;
+    }
+
+    // 🚀 QUERY ENGINE
     public function get_chart_data()
     {
         if (!current_user_can('manage_woocommerce'))
             wp_send_json_error('Unauthorized');
 
         global $wpdb;
-        // La consulta optimizada usando índices
         $results = $wpdb->get_results(
             "SELECT report_date, SUM(order_total) as total_sales 
              FROM $this->table_name 
@@ -130,94 +232,131 @@ class WooSpeed_Analytics
         wp_send_json_success($results);
     }
 
-    // 🎨 FRONTEND: El Dashboard
-    public function add_admin_menu()
-    {
-        add_submenu_page('woocommerce', 'Speed Analytics', 'Speed Analytics 🚀', 'manage_woocommerce', 'woospeed-analytics', [$this, 'render_admin_page']);
-    }
-
     public function enqueue_assets($hook)
     {
-        if ($hook != 'woocommerce_page_woospeed-analytics')
+        if (strpos($hook, 'woospeed') === false)
             return;
         wp_enqueue_script('chartjs', 'https://cdn.jsdelivr.net/npm/chart.js', [], null, true);
     }
 
-    public function render_admin_page()
+    // 📟 VISTA DASHBOARD
+    public function render_dashboard()
     {
         global $wpdb;
         $start_time = microtime(true);
         $total_orders = $wpdb->get_var("SELECT COUNT(*) FROM $this->table_name");
         $query_time = number_format(microtime(true) - $start_time, 5);
         ?>
-                <div class="wrap">
-                    <h1>🚀 WooCommerce High-Performance Analytics</h1>
-                    <div style="background: #fff; border-left: 4px solid #007cba; padding: 12px 15px; margin: 15px 0; box-shadow: 0 1px 1px rgba(0,0,0,0.04);">
-                        <p style="margin: 0; font-size: 14px; color: #3c434a;">
-                            <b>Estado del Sistema:</b> Arquitectura de Tabla Plana Activa. <br>
-                            <span style="display: inline-block; margin-top: 5px;">
-                                📊 Ventas Procesadas: <b><?php echo number_format($total_orders); ?></b> | 
-                                ⚡ Tiempo de Consulta SQL: <b><?php echo $query_time; ?>s</b>
-                            </span>
-                        </p>
-                    </div>
+        <div class="wrap">
+            <h1>🚀 WooSpeed Analytics Dashboard</h1>
+            <div
+                style="background: #fff; border-left: 4px solid #007cba; padding: 12px 15px; margin: 15px 0; box-shadow: 0 1px 1px rgba(0,0,0,0.04);">
+                <p style="margin: 0; font-size: 14px; color: #3c434a;">
+                    <b>Estado del Sistema:</b> Arquitectura de Tabla Plana Activa. <br>
+                    <span style="display: inline-block; margin-top: 5px;">
+                        📊 Ventas Procesadas: <b><?php echo number_format($total_orders); ?></b> |
+                        ⚡ Tiempo de Consulta SQL: <b><?php echo $query_time; ?>s</b>
+                    </span>
+                </p>
+            </div>
 
-                            <?php if (isset($_GET['seeded'])): ?>
-                                    <div class="notice notice-success is-dismissible">
-                                        <p>✅ ¡Datos dummy generados exitosamente!</p>
-                                    </div>
-                            <?php endif; ?>
+            <div
+                style="margin-top: 20px; background: white; padding: 20px; border: 1px solid #ccd0d4; box-shadow: 0 1px 1px rgba(0,0,0,.04);">
+                <canvas id="speedChart" height="100"></canvas>
+            </div>
 
-                            <a href="<?php echo admin_url('admin.php?page=woospeed-analytics&seed=1'); ?>"
-                                class="button button-secondary" onclick="return confirm('¿Generar 5000 ventas falsas?');">
-                                🛠 Generar Datos de Prueba
-                            </a>
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    const ctx = document.getElementById('speedChart').getContext('2d');
+                    fetch(ajaxurl + '?action=woospeed_get_data')
+                        .then(res => res.json())
+                        .then(response => {
+                            if (!response.success) return;
+                            const data = response.data;
+                            new Chart(ctx, {
+                                type: 'line',
+                                data: {
+                                    labels: data.map(d => d.report_date),
+                                    datasets: [{
+                                        label: 'Ingresos Totales ($)',
+                                        data: data.map(d => d.total_sales),
+                                        borderColor: '#007cba',
+                                        backgroundColor: 'rgba(0, 124, 186, 0.1)',
+                                        borderWidth: 2,
+                                        fill: true,
+                                        tension: 0.3
+                                    }]
+                                },
+                                options: { responsive: true, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } } }
+                            });
+                        });
+                });
+            </script>
+        </div>
+        <?php
+    }
 
-                            <div
-                                style="margin-top: 20px; background: white; padding: 20px; border: 1px solid #ccd0d4; box-shadow: 0 1px 1px rgba(0,0,0,.04);">
-                                <canvas id="speedChart" height="100"></canvas>
-                            </div>
+    // 📟 VISTA GENERADOR
+    public function render_generator_page()
+    {
+        ?>
+        <div class="wrap">
+            <h1>🛠️ Generador de Datos Stress-Test</h1>
+            <p>Utilice estas herramientas para simular actividad de alto tráfico en la tienda.</p>
 
-                            <script>
-                                document.addEventListener('DOMContentLoaded', function () {
-                                    const ctx = document.getElementById('speedChart').getContext('2d');
-
-                                    fetch(ajaxurl + '?action=woospeed_get_data')
-                                        .then(res => res.json())
-                                        .then(response => {
-                                            if (!response.success) return alert('Error API');
-
-                                            const data = response.data;
-                                            if (data.length === 0) {
-                                                alert("No hay datos. ¡Usa el botón 'Generar Datos de Prueba'!");
-                                                return;
-                                            }
-
-                                            new Chart(ctx, {
-                                                type: 'line',
-                                                data: {
-                                                    labels: data.map(d => d.report_date),
-                                                    datasets: [{
-                                                        label: 'Ingresos Totales ($)',
-                                                        data: data.map(d => d.total_sales),
-                                                        borderColor: '#007cba',
-                                                        backgroundColor: 'rgba(0, 124, 186, 0.1)',
-                                                        borderWidth: 2,
-                                                        fill: true,
-                                                        tension: 0.3
-                                                    }]
-                                                },
-                                                options: {
-                                                    responsive: true,
-                                                    plugins: { legend: { position: 'top' } },
-                                                    scales: { y: { beginAtZero: true } }
-                                                }
-                                            });
-                                        });
-                                });
-                            </script>
+            <?php if (isset($_GET['seeded'])): ?>
+                <div class="notice notice-success is-dismissible">
+                    <p>
+                        ✅ Operación Completada:
+                        Generados <b><?php echo esc_html($_GET['count']); ?></b> items
+                        (Tipo: <?php echo esc_html($_GET['type']); ?>).
+                    </p>
                 </div>
-                <?php
+            <?php endif; ?>
+
+            <div style="display: flex; gap: 20px; margin-top: 20px;">
+                <!-- Card 1 -->
+                <div
+                    style="flex: 1; background: #fff; padding: 20px; border: 1px solid #ccd0d4; box-shadow: 0 1px 2px rgba(0,0,0,.05);">
+                    <h3>1. Simulación Analytics (SQL)</h3>
+                    <p>Inyecta 5,000 registros directamente en la tabla plana. Extremadamente rápido.</p>
+                    <a href="<?php echo admin_url('admin.php?page=woospeed-generator&seed_action=analytics_5k'); ?>"
+                        class="button button-primary" onclick="return confirm('¿Crear 5000 registros SQL?');">
+                        🚀 Generar 5,000 Registros
+                    </a>
+                </div>
+
+                <!-- Card 2 -->
+                <div
+                    style="flex: 1; background: #fff; padding: 20px; border: 1px solid #ccd0d4; box-shadow: 0 1px 2px rgba(0,0,0,.05);">
+                    <h3>2. Productos Dummy (Real WC)</h3>
+                    <p>Crea 20 productos simples reales en WooCommerce para poblar la tienda.</p>
+                    <a href="<?php echo admin_url('admin.php?page=woospeed-generator&seed_action=products_20'); ?>"
+                        class="button button-secondary" onclick="return confirm('¿Crear 20 Productos Reales?');">
+                        📦 Generar 20 Productos
+                    </a>
+                </div>
+
+                <!-- Card 3 -->
+                <div
+                    style="flex: 1; background: #fff; padding: 20px; border: 1px solid #ccd0d4; box-shadow: 0 1px 2px rgba(0,0,0,.05);">
+                    <h3>3. Órdenes Reales (Sync Test)</h3>
+                    <p>Crea 50 pedidos completados reales. <b>Dispara los hooks</b> y prueba la sincronización en tiempo real.
+                    </p>
+                    <a href="<?php echo admin_url('admin.php?page=woospeed-generator&seed_action=orders_50'); ?>"
+                        class="button button-secondary"
+                        onclick="return confirm('¿Crear 50 Pedidos Reales? Esto puede tardar unos segundos.');">
+                        🛒 Generar 50 Pedidos
+                    </a>
+                </div>
+            </div>
+
+            <div style="margin-top: 20px;">
+                <p><i>Nota: Las órdenes reales aparecerán en "WooCommerce > Pedidos" y se sincronizarán automáticamente con el
+                        Dashboard de Speed Analytics.</i></p>
+            </div>
+        </div>
+        <?php
     }
 }
 
