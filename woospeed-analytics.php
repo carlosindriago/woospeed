@@ -38,6 +38,7 @@ class WooSpeed_Analytics
 
         // 3. API Interna (AJAX)
         add_action('wp_ajax_woospeed_get_data', [$this, 'get_chart_data']);
+        add_action('wp_ajax_woospeed_seed_batch', [$this, 'handle_batch_seed']);
 
         // 4. Seeder Handlers
         add_action('admin_init', [$this, 'handle_seed_actions']);
@@ -276,6 +277,35 @@ class WooSpeed_Analytics
         return $count;
     }
 
+    // 🚀 AJAX BATCH HANDLER
+    public function handle_batch_seed()
+    {
+        // Verificar permisos y nonce si fuera necesario (simplificado para PoC)
+        if (!current_user_can('manage_options'))
+            wp_send_json_error('Unauthorized');
+
+        $batch_size = isset($_POST['batch_size']) ? intval($_POST['batch_size']) : 50;
+        set_time_limit(0); // Evitar timeout en este batch
+
+        // 1. Asegurar Productos
+        $this->ensure_dummy_products();
+
+        // 2. Generar Batch de Órdenes
+        $count = $this->seed_wc_orders($batch_size);
+
+        wp_send_json_success(['count' => $count, 'message' => "Batch de $count órdenes completado."]);
+    }
+
+    private function ensure_dummy_products()
+    {
+        $products = wc_get_products(['limit' => 1, 'tag' => ['_woospeed_dummy']]);
+        // Si hay menos de 10 productos, generamos 20 más para asegurar variedad
+        $count = count(wc_get_products(['limit' => 10, 'status' => 'publish']));
+        if ($count < 5) {
+            $this->seed_wc_products(20);
+        }
+    }
+
     // 🚀 QUERY ENGINE
     public function get_chart_data()
     {
@@ -384,23 +414,33 @@ class WooSpeed_Analytics
                 </div>
             <?php endif; ?>
 
+            <!-- Barra de Progreso (Oculta por defecto) -->
+            <div id="seed-progress-container"
+                style="display:none; margin-top: 20px; background: #fff; padding: 20px; border: 1px solid #ccd0d4; box-shadow: 0 1px 2px rgba(0,0,0,.05);">
+                <h3>⏳ Generando Datos Masivos...</h3>
+                <p>Por favor no cierres esta pestaña. Procesando <span id="processed-count">0</span> de <span
+                        id="total-count">0</span>...</p>
+                <progress id="seed-progress" value="0" max="100" style="width: 100%; height: 30px;"></progress>
+            </div>
+
             <div style="display: flex; gap: 20px; margin-top: 20px;">
-                <!-- Card 1 -->
+                <!-- Card 1: Masiva Real -->
                 <div
-                    style="flex: 1; background: #fff; padding: 20px; border: 1px solid #ccd0d4; box-shadow: 0 1px 2px rgba(0,0,0,.05);">
-                    <h3>1. Simulación Analytics (SQL)</h3>
-                    <p>Inyecta 5,000 registros directamente en la tabla plana. Extremadamente rápido.</p>
-                    <a href="<?php echo admin_url('admin.php?page=woospeed-generator&seed_action=analytics_5k'); ?>"
-                        class="button button-primary" onclick="return confirm('¿Crear 5000 registros SQL?');">
-                        🚀 Generar 5,000 Registros
-                    </a>
+                    style="flex: 1; background: #fff; padding: 20px; border: 1px solid #ccd0d4; box-shadow: 0 1px 2px rgba(0,0,0,.05); border-top: 4px solid #007cba;">
+                    <h3>1. Simulación Real Masiva</h3>
+                    <p>Genera <b>5,000 Pedidos Reales</b> en tandas. <br>Refleja una carga real en WooCommerce y Speed
+                        Analytics.</p>
+                    <button id="btn-start-batch" class="button button-primary" style="width:100%; margin-top:10px;">
+                        🚀 Iniciar Carga Masiva (5,000)
+                    </button>
+                    <p style="font-size: 11px; color: #666; margin-top: 5px;">* Se ejecutará en 10 tandas de 500.</p>
                 </div>
 
                 <!-- Card 2 -->
                 <div
                     style="flex: 1; background: #fff; padding: 20px; border: 1px solid #ccd0d4; box-shadow: 0 1px 2px rgba(0,0,0,.05);">
-                    <h3>2. Productos Dummy (Real WC)</h3>
-                    <p>Crea 20 productos simples reales en WooCommerce para poblar la tienda.</p>
+                    <h3>2. Productos Dummy</h3>
+                    <p>Crea 20 productos simples reales para poblar la tienda (necesarios para los pedidos).</p>
                     <a href="<?php echo admin_url('admin.php?page=woospeed-generator&seed_action=products_20'); ?>"
                         class="button button-secondary" onclick="return confirm('¿Crear 20 Productos Reales?');">
                         📦 Generar 20 Productos
@@ -410,16 +450,76 @@ class WooSpeed_Analytics
                 <!-- Card 3 -->
                 <div
                     style="flex: 1; background: #fff; padding: 20px; border: 1px solid #ccd0d4; box-shadow: 0 1px 2px rgba(0,0,0,.05);">
-                    <h3>3. Órdenes Reales (Sync Test)</h3>
-                    <p>Crea 50 pedidos completados reales. <b>Dispara los hooks</b> y prueba la sincronización en tiempo real.
-                    </p>
+                    <h3>3. Test Rápido (50)</h3>
+                    <p>Prueba rápida de sincronización con 50 pedidos.</p>
                     <a href="<?php echo admin_url('admin.php?page=woospeed-generator&seed_action=orders_50'); ?>"
-                        class="button button-secondary"
-                        onclick="return confirm('¿Crear 50 Pedidos Reales? Esto puede tardar unos segundos.');">
+                        class="button button-secondary" onclick="return confirm('¿Crear 50 Pedidos Reales?');">
                         🛒 Generar 50 Pedidos
                     </a>
                 </div>
             </div>
+
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    const btn = document.getElementById('btn-start-batch');
+                    const progressContainer = document.getElementById('seed-progress-container');
+                    const progressBar = document.getElementById('seed-progress');
+                    const processedSpan = document.getElementById('processed-count');
+                    const totalSpan = document.getElementById('total-count');
+
+                    const TOTAL_ORDERS = 5000;
+                    const BATCH_SIZE = 500;
+                    let processed = 0;
+
+                    btn.addEventListener('click', function () {
+                        if (!confirm('Esto generará 5,000 pedidos reales. ¿Continuar?')) return;
+
+                        btn.disabled = true;
+                        progressContainer.style.display = 'block';
+                        processed = 0;
+                        totalSpan.innerText = TOTAL_ORDERS;
+                        progressBar.value = 0;
+
+                        processBatch();
+                    });
+
+                    function processBatch() {
+                        if (processed >= TOTAL_ORDERS) {
+                            alert('✅ ¡Proceso Terminado! 5,000 Pedidos Generados.');
+                            window.location.reload();
+                            return;
+                        }
+
+                        const data = new FormData();
+                        data.append('action', 'woospeed_seed_batch');
+                        data.append('batch_size', BATCH_SIZE);
+
+                        fetch(ajaxurl, {
+                            method: 'POST',
+                            body: data
+                        })
+                            .then(res => res.json())
+                            .then(response => {
+                                if (response.success) {
+                                    processed += BATCH_SIZE;
+                                    const percent = Math.min(100, (processed / TOTAL_ORDERS) * 100);
+                                    progressBar.value = percent;
+                                    processedSpan.innerText = Math.min(processed, TOTAL_ORDERS);
+
+                                    // Recursión
+                                    processBatch();
+                                } else {
+                                    alert('Error en el proceso: ' + response.data);
+                                    btn.disabled = false;
+                                }
+                            })
+                            .catch(err => {
+                                alert('Error de red. Intenta de nuevo.');
+                                btn.disabled = false;
+                            });
+                    }
+                });
+            </script>
 
             <div style="margin-top: 20px;">
                 <p><i>Nota: Las órdenes reales aparecerán en "WooCommerce > Pedidos" y se sincronizarán automáticamente con el
