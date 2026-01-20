@@ -387,28 +387,54 @@ class WooSpeed_Analytics
             <script>
                 document.addEventListener('DOMContentLoaded', function () {
                     const ctx = document.getElementById('speedChart').getContext('2d');
-                    fetch(ajaxurl + '?action=woospeed_get_data')
-                        .then(res => res.json())
-                        .then(response => {
-                            if (!response.success) return;
-                            const data = response.data;
-                            new Chart(ctx, {
-                                type: 'line',
-                                data: {
-                                    labels: data.map(d => d.report_date),
-                                    datasets: [{
-                                        label: 'Ingresos Totales ($)',
-                                        data: data.map(d => d.total_sales),
-                                        borderColor: '#007cba',
-                                        backgroundColor: 'rgba(0, 124, 186, 0.1)',
-                                        borderWidth: 2,
-                                        fill: true,
-                                        tension: 0.3
-                                    }]
-                                },
-                                options: { responsive: true, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } } }
-                            });
+                    let speedChart = null;
+
+                    // Función para iniciar la gráfica
+                    function initChart(data) {
+                        speedChart = new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: data.map(d => d.report_date),
+                                datasets: [{
+                                    label: 'Ingresos Totales ($)',
+                                    data: data.map(d => d.total_sales),
+                                    borderColor: '#007cba',
+                                    backgroundColor: 'rgba(0, 124, 186, 0.1)',
+                                    borderWidth: 2,
+                                    fill: true,
+                                    tension: 0.3
+                                }]
+                            },
+                            options: { responsive: true, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } } }
                         });
+                    }
+
+                    // Función para actualizar datos (Polling)
+                    function updateChart() {
+                        fetch(ajaxurl + '?action=woospeed_get_data')
+                            .then(res => res.json())
+                            .then(response => {
+                                if (!response.success) return;
+
+                                const data = response.data;
+
+                                if (!speedChart) {
+                                    initChart(data);
+                                } else {
+                                    // Actualizar datos existentes
+                                    speedChart.data.labels = data.map(d => d.report_date);
+                                    speedChart.data.datasets[0].data = data.map(d => d.total_sales);
+                                    speedChart.update('none'); // 'none' para evitar parpadeos
+                                }
+                            })
+                            .catch(err => console.error('Error polling data:', err));
+                    }
+
+                    // 1. Carga Inicial
+                    updateChart();
+
+                    // 2. Refresco Automático (Cada 5s)
+                    setInterval(updateChart, 5000);
                 });
             </script>
         </div>
