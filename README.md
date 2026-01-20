@@ -39,12 +39,18 @@ Instead of using heavy abstraction layers (ORM), pure prepared SQL queries (`$wp
 1. Navigate to **Speed Analytics** in the main sidebar.
 2. **Dashboard Tab:** View real-time analytics (defaults to empty).
 3. **Generator Tab (Stress Test):**
-   - **Analytics Simulation:** Generates 5,000 SQL records instantly.
-   - **Real Products:** Creates 20 WooCommerce products with random prices.
-   - **Real Orders:** Creates 50 completed orders. **Triggers real-time sync hooks.**
+   - **Step 1: Products (Mandatory):** Generates 20 real WooCommerce products.
+   - **Step 2: Massive Load (5k):** Uses **AJAX Batched Processing** (10 x 500) to generate 5,000 real orders without server timeouts.
+   - **Realistic Simulation:** Orders are created with random dates (**last 90 days**) to simulate historical sales patterns.
+   - **Test Rápido (50):** Creates 50 orders instantly for quick sync checks.
 4. **Cleanup:**
    - Use the **Danger Zone** at the bottom to wipe all generated data.
    - Supports intelligent cleanup of products and orders tagged with `_woospeed_dummy`.
+
+## 🛡️ Security Features
+- **Nonce Verification:** Every AJAX request is protected by a cryptographic Nonce (`woospeed_seed_nonce`) to prevent CSRF attacks.
+- **Capability Checks:** Strict `current_user_can('manage_options')` validation on all sensitive endpoints.
+- **Prepared Statements:** 100% protection against SQL Injection using `$wpdb->prepare`.
 
 ## 🛡️ Clean Uninstall Protocol
 This plugin respects your database. Upon deletion:
