@@ -288,6 +288,9 @@ class WooSpeed_Analytics
     // 🚀 AJAX BATCH HANDLER
     public function handle_batch_seed()
     {
+        // Verificar Nonce de Seguridad (CSRF) 🛡️
+        check_ajax_referer('woospeed_seed_nonce', 'security'); // 🛑 El Portero verifica la llave
+
         // Verificar permisos y nonce si fuera necesario (simplificado para PoC)
         if (!current_user_can('manage_options'))
             wp_send_json_error('Unauthorized');
@@ -398,6 +401,8 @@ class WooSpeed_Analytics
     // 📟 VISTA GENERADOR
     public function render_generator_page()
     {
+        // 🛡️ Crear Llave de Seguridad (Nonce)
+        $nonce = wp_create_nonce('woospeed_seed_nonce');
         ?>
                 <div class="wrap">
                     <h1>🛠️ Generador de Datos Stress-Test</h1>
@@ -470,6 +475,9 @@ class WooSpeed_Analytics
                             const processedSpan = document.getElementById('processed-count');
                             const totalSpan = document.getElementById('total-count');
 
+                            // 🛡️ Definir la llave de seguridad para JS
+                            const securityNonce = "<?php echo $nonce; ?>";
+
                             const TOTAL_ORDERS = 5000;
                             const BATCH_SIZE = 500;
                             let processed = 0;
@@ -496,6 +504,7 @@ class WooSpeed_Analytics
                                 const data = new FormData();
                                 data.append('action', 'woospeed_seed_batch');
                                 data.append('batch_size', BATCH_SIZE);
+                                data.append('security', securityNonce); // 🛡️ Enviamos la llave al servidor
 
                                 fetch(ajaxurl, {
                                     method: 'POST',
