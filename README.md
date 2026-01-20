@@ -36,19 +36,28 @@ Instead of using heavy abstraction layers (ORM), pure prepared SQL queries (`$wp
 
 ## 🧪 Usage & Testing
 
-1. Navigate to **WooCommerce > Speed Analytics**.
-2. **First Run:** The dashboard will be empty.
-3. **Generate Dummy Data:**
-   - Click the "🛠 Generar Datos de Prueba" button in the Generator tab.
-   - You can create Analytics data (SQL), real Products, or real Orders.
-   - Use the **Red "Clear Data" button** to remove all generated test data.
-4. View the real-time graph generated in milliseconds.
+1. Navigate to **Speed Analytics** in the main sidebar.
+2. **Dashboard Tab:** View real-time analytics (defaults to empty).
+3. **Generator Tab (Stress Test):**
+   - **Analytics Simulation:** Generates 5,000 SQL records instantly.
+   - **Real Products:** Creates 20 WooCommerce products with random prices.
+   - **Real Orders:** Creates 50 completed orders. **Triggers real-time sync hooks.**
+4. **Cleanup:**
+   - Use the **Danger Zone** at the bottom to wipe all generated data.
+   - Supports intelligent cleanup of products and orders tagged with `_woospeed_dummy`.
+
+## 🛡️ Clean Uninstall Protocol
+This plugin respects your database. Upon deletion:
+- `uninstall.php` is triggered.
+- The custom table `wp_wc_speed_reports` is **completely dropped**.
+- No residual data is left behind.
 
 ## 📂 File Structure
 
 ```
 woospeed-analytics/
-├── woospeed-analytics.php  # Main plugin file (Singleton, Hooks, SQL logic)
+├── woospeed-analytics.php  # Main Plugin Core (Singleton, CQRS, UI)
+├── uninstall.php           # Clean Uninstall Protocol (Drop Table)
 ├── README.md               # Documentation
 └── .gitignore              # Git ignore rules
 ```
