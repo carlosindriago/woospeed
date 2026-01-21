@@ -47,23 +47,28 @@ Instead of using heavy abstraction layers (ORM), pure prepared SQL queries (`$wp
 
 1. Clone this repository into your `wp-content/plugins/` directory:
    ```bash
-   git clone [repository-url] woospeed-analytics
+   git clone https://github.com/carlosindriago/woospeed.git woospeed-analytics
    ```
 2. Activate the plugin in the WordPress Admin Dashboard.
-3. Upon activation, the custom table `wp_wc_speed_reports` will be automatically created.
+3. Upon activation, two custom tables are automatically created:
+   - `wp_wc_speed_reports` - Order totals for KPIs and charts
+   - `wp_wc_speed_order_items` - Individual product data for Top Products
 
 ## 🧪 Usage & Testing
 
 1. Navigate to **Speed Analytics** in the main sidebar.
-2. **Dashboard Tab:** View real-time analytics (defaults to empty).
+2. **Dashboard Tab (v2.0):**
+   - **KPI Cards:** View Total Revenue, Orders, Avg Order Value, and Max Order at a glance.
+   - **Date Filter:** Select 7 days, 30 days, Quarter, or Full Year from the dropdown.
+   - **Sales Trend Chart:** Visualize daily revenue trends with auto-updating data.
+   - **Top Products Leaderboard:** See your 5 best-selling products ranked by quantity.
+   - **Real-Time:** Dashboard auto-refreshes every 10 seconds.
 3. **Generator Tab (Stress Test):**
    - **Step 1: Products (Mandatory):** Generates 20 real WooCommerce products.
-   - **Step 2: Massive Load (5k):** Uses **AJAX Batched Processing** (10 x 500) to generate 5,000 real orders without server timeouts.
-   - **Realistic Simulation:** Orders are created with random dates (**last 90 days**) to simulate historical sales patterns.
-   - **Test Rápido (50):** Creates 50 orders instantly for quick sync checks.
+   - **Step 2: Massive Load (5k):** Uses **AJAX Batched Processing** (10 x 500) to generate 5,000 real orders.
+   - **Realistic Simulation:** Orders are created with random dates (**last 90 days**).
 4. **Cleanup:**
-   - Use the **Danger Zone** at the bottom to wipe all generated data.
-   - Supports intelligent cleanup of products and orders tagged with `_woospeed_dummy`.
+   - Use the **Danger Zone** to wipe all generated data (products, orders, and analytics).
 
 ## 🛡️ Security Features
 - **Nonce Verification:** Every AJAX request is protected by a cryptographic Nonce (`woospeed_seed_nonce`) to prevent CSRF attacks.
@@ -73,7 +78,9 @@ Instead of using heavy abstraction layers (ORM), pure prepared SQL queries (`$wp
 ## 🛡️ Clean Uninstall Protocol
 This plugin respects your database. Upon deletion:
 - `uninstall.php` is triggered.
-- The custom table `wp_wc_speed_reports` is **completely dropped**.
+- Both custom tables are **completely dropped**:
+  - `wp_wc_speed_reports`
+  - `wp_wc_speed_order_items`
 - No residual data is left behind.
 
 ## 📂 File Structure
