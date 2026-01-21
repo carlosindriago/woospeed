@@ -190,6 +190,10 @@ class WooSpeed_Analytics
             $count = $this->seed_wc_products(20);
         } elseif ($action === 'orders_50') {
             $count = $this->seed_wc_orders(50);
+        } elseif ($action === 'migrate_items') {
+            $count = $this->migrate_existing_items();
+            wp_redirect(admin_url("admin.php?page=woospeed-generator&migrated=true&count=$count"));
+            exit;
         } elseif ($action === 'clear_all') {
             $count = $this->clear_dummy_data();
             wp_redirect(admin_url("admin.php?page=woospeed-generator&cleared=true&count=$count"));
@@ -198,6 +202,51 @@ class WooSpeed_Analytics
 
         wp_redirect(admin_url("admin.php?page=woospeed-generator&seeded=true&type=$action&count=$count"));
         exit;
+    }
+
+    // 🔄 MIGRACIÓN: Poblar items desde órdenes existentes
+    private function migrate_existing_items()
+    {
+        global $wpdb;
+        $count = 0;
+
+        // Obtener todos los order_ids de nuestra tabla de reportes
+        $order_ids = $wpdb->get_col("SELECT order_id FROM $this->table_name");
+
+        foreach ($order_ids as $order_id) {
+            $order = wc_get_order($order_id);
+            if (!$order)
+                continue;
+
+            $date = $order->get_date_created() ? $order->get_date_created()->date('Y-m-d') : date('Y-m-d');
+
+            // Verificar si ya tiene items migrados
+            $existing = $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM $this->items_table_name WHERE order_id = %d",
+                $order_id
+            ));
+
+            if ($existing > 0)
+                continue; // Ya migrado
+
+            foreach ($order->get_items() as $item) {
+                $product = $item->get_product();
+                if (!$product)
+                    continue;
+
+                $wpdb->insert($this->items_table_name, [
+                    'order_id' => $order_id,
+                    'product_id' => $product->get_id(),
+                    'product_name' => $item->get_name(),
+                    'quantity' => $item->get_quantity(),
+                    'line_total' => $item->get_total(),
+                    'report_date' => $date
+                ]);
+                $count++;
+            }
+        }
+
+        return $count;
     }
 
     // 🧹 CLEANER: Borra todo lo generado
@@ -880,6 +929,41 @@ class WooSpeed_Analytics
                         🧹 Limpieza Completada:
                         Se han eliminado <b><?php echo esc_html($_GET['count']); ?></b> registros de prueba.
                     </p>
+                </div>
+            <?php endif; ?>
+
+            <?php if (isset($_GET['migrated'])): ?>
+                <div class="notice notice-success is-dismissible">
+                    <p>
+                        🔄 Migración Completada:
+                        Se han sincronizado <b><?php echo esc_html($_GET['count']); ?></b> items de productos a la tabla de
+                        leaderboard.
+                    </p>
+                </div>
+            <?php endif; ?>
+
+            <!-- Card de Migración (Si hay órdenes sin items) -->
+            <?php
+            global $wpdb;
+            $orders_count = $wpdb->get_var("SELECT COUNT(*) FROM $this->table_name");
+            $items_count = $wpdb->get_var("SELECT COUNT(DISTINCT order_id) FROM $this->items_table_name");
+            $needs_migration = ($orders_count > 0 && $items_count < $orders_count);
+            ?>
+
+            <?php if ($needs_migration): ?>
+                <div
+                    style="background: #fff3cd; border: 1px solid #ffc107; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                    <h3 style="margin-top:0; color: #856404;">⚠️ Migración Requerida</h3>
+                    <p>Tienes <b><?php echo number_format($orders_count); ?></b> órdenes en el sistema, pero solo
+                        <b><?php echo number_format($items_count); ?></b> tienen sus productos sincronizados para el "Top
+                        Productos".</p>
+                    <a href="<?php echo admin_url('admin.php?page=woospeed-generator&seed_action=migrate_items'); ?>"
+                        class="button button-primary"
+                        onclick="return confirm('Esto sincronizará los items de todas las órdenes existentes. ¿Continuar?');">
+                        🔄 Migrar Items Ahora
+                    </a>
+                    <p style="font-size: 11px; color: #856404; margin-top: 10px;">* Esto puede tardar unos segundos dependiendo del
+                        número de órdenes.</p>
                 </div>
             <?php endif; ?>
 
