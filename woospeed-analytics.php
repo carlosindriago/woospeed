@@ -2,7 +2,7 @@
 /*
 Plugin Name: WooSpeed Analytics 🚀
 Description: Herramienta para WooCommerce con arquitectura de alto rendimiento para generar reportes en 0.01s usando Tablas Planas y Raw SQL.
-Version: 1.2.0
+Version: 2.0.0
 Author: Carlos Indriago
 */
 
@@ -14,6 +14,7 @@ class WooSpeed_Analytics
 
     private static $instance = null;
     private $table_name;
+    private $items_table_name; // Nueva tabla de items granulares
 
     public static function get_instance()
     {
@@ -27,6 +28,7 @@ class WooSpeed_Analytics
     {
         global $wpdb;
         $this->table_name = $wpdb->prefix . 'wc_speed_reports';
+        $this->items_table_name = $wpdb->prefix . 'wc_speed_order_items';
 
         // 1. Hooks de Instalación y Operación
         register_activation_hook(__FILE__, [$this, 'create_table']);
@@ -43,6 +45,22 @@ class WooSpeed_Analytics
 
         // 4. Seeder Handlers
         add_action('admin_init', [$this, 'handle_seed_actions']);
+
+        // 5. Auto-upgrade: Crear tabla items si no existe
+        add_action('admin_init', [$this, 'maybe_upgrade_tables']);
+    }
+
+    // 🔄 AUTO-UPGRADE: Crear tablas faltantes
+    public function maybe_upgrade_tables()
+    {
+        global $wpdb;
+
+        // Verificar si la tabla de items existe
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$this->items_table_name'");
+
+        if (!$table_exists) {
+            $this->create_table(); // Esto creará ambas tablas (dbDelta es idempotente)
+        }
     }
 
     // 🏗️ ARQUITECTURA: Tabla Plana Optimizada
@@ -63,6 +81,22 @@ class WooSpeed_Analytics
 
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
         dbDelta($sql);
+
+        // 🎯 TABLA GRANULAR: Items de cada orden (para Top Products)
+        $sql_items = "CREATE TABLE $this->items_table_name (
+            id mediumint(9) NOT NULL AUTO_INCREMENT,
+            order_id bigint(20) NOT NULL,
+            product_id bigint(20) NOT NULL,
+            product_name varchar(255) NOT NULL,
+            quantity int(11) NOT NULL,
+            line_total decimal(10,2) NOT NULL,
+            report_date date NOT NULL,
+            PRIMARY KEY  (id),
+            KEY order_id (order_id),
+            KEY product_id (product_id),
+            KEY report_date (report_date)
+        ) $charset_collate;";
+        dbDelta($sql_items);
     }
 
     // 🔄 SYNC: El corazón del patrón CQRS
@@ -84,6 +118,25 @@ class WooSpeed_Analytics
             $total,
             $date
         ));
+
+        // 🎯 SYNC ITEMS: Guardar detalle de productos para Top Products
+        // Primero borramos items anteriores (por si es update)
+        $wpdb->delete($this->items_table_name, ['order_id' => $order_id]);
+
+        foreach ($order->get_items() as $item) {
+            $product = $item->get_product();
+            if (!$product)
+                continue;
+
+            $wpdb->insert($this->items_table_name, [
+                'order_id' => $order_id,
+                'product_id' => $product->get_id(),
+                'product_name' => $item->get_name(),
+                'quantity' => $item->get_quantity(),
+                'line_total' => $item->get_total(),
+                'report_date' => $date
+            ]);
+        }
     }
 
     // 🔄 LIFECYCLE: Manejo de cancelaciones y devoluciones
@@ -95,6 +148,7 @@ class WooSpeed_Analytics
         // Borramos la entrada de nuestra tabla de reportes para mantener la verdad.
         if (in_array($to, ['cancelled', 'refunded', 'failed', 'trash'])) {
             $wpdb->delete($this->table_name, ['order_id' => $order_id]);
+            $wpdb->delete($this->items_table_name, ['order_id' => $order_id]); // Limpiar items también
         }
         // Si vuelve a ser 'completed' o 'processing', la sincronizamos
         elseif (in_array($to, ['completed', 'processing'])) {
@@ -152,6 +206,10 @@ class WooSpeed_Analytics
             $count = $this->seed_wc_products(20);
         } elseif ($action === 'orders_50') {
             $count = $this->seed_wc_orders(50);
+        } elseif ($action === 'migrate_items') {
+            $count = $this->migrate_existing_items();
+            wp_redirect(admin_url("admin.php?page=woospeed-generator&migrated=true&count=$count"));
+            exit;
         } elseif ($action === 'clear_all') {
             $count = $this->clear_dummy_data();
             wp_redirect(admin_url("admin.php?page=woospeed-generator&cleared=true&count=$count"));
@@ -160,6 +218,51 @@ class WooSpeed_Analytics
 
         wp_redirect(admin_url("admin.php?page=woospeed-generator&seeded=true&type=$action&count=$count"));
         exit;
+    }
+
+    // 🔄 MIGRACIÓN: Poblar items desde órdenes existentes
+    private function migrate_existing_items()
+    {
+        global $wpdb;
+        $count = 0;
+
+        // Obtener todos los order_ids de nuestra tabla de reportes
+        $order_ids = $wpdb->get_col("SELECT order_id FROM $this->table_name");
+
+        foreach ($order_ids as $order_id) {
+            $order = wc_get_order($order_id);
+            if (!$order)
+                continue;
+
+            $date = $order->get_date_created() ? $order->get_date_created()->date('Y-m-d') : date('Y-m-d');
+
+            // Verificar si ya tiene items migrados
+            $existing = $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM $this->items_table_name WHERE order_id = %d",
+                $order_id
+            ));
+
+            if ($existing > 0)
+                continue; // Ya migrado
+
+            foreach ($order->get_items() as $item) {
+                $product = $item->get_product();
+                if (!$product)
+                    continue;
+
+                $wpdb->insert($this->items_table_name, [
+                    'order_id' => $order_id,
+                    'product_id' => $product->get_id(),
+                    'product_name' => $item->get_name(),
+                    'quantity' => $item->get_quantity(),
+                    'line_total' => $item->get_total(),
+                    'report_date' => $date
+                ]);
+                $count++;
+            }
+        }
+
+        return $count;
     }
 
     // 🧹 CLEANER: Borra todo lo generado
@@ -171,6 +274,10 @@ class WooSpeed_Analytics
         // 1. Borrar Tabla Plana (Solo IDs altos dummy)
         $deleted_rows = $wpdb->query("DELETE FROM $this->table_name WHERE order_id >= 9000000");
         $count += $deleted_rows;
+
+        // 1.1 Borrar Items de órdenes dummy
+        $deleted_items = $wpdb->query("DELETE FROM $this->items_table_name WHERE order_id >= 9000000");
+        $count += $deleted_items;
 
         // 2. Borrar Productos Dummy (Meta Tag + Legacy Pattern)
         $dummy_products = wc_get_products([
@@ -347,21 +454,75 @@ class WooSpeed_Analytics
         }
     }
 
-    // 🚀 QUERY ENGINE
+    // 🚀 QUERY ENGINE - Dashboard API Unificada
     public function get_chart_data()
     {
         if (!current_user_can('manage_woocommerce'))
             wp_send_json_error('Unauthorized');
 
         global $wpdb;
-        $results = $wpdb->get_results(
+
+        // 📅 Filtro de Fechas Dinámico
+        $days = isset($_GET['days']) ? intval($_GET['days']) : 30;
+        $start_date = date('Y-m-d', strtotime("-$days days"));
+        $end_date = date('Y-m-d');
+
+        // 📊 KPIs - Métricas ejecutivas en una sola query
+        $kpis = $wpdb->get_row($wpdb->prepare(
+            "SELECT 
+                COALESCE(SUM(order_total), 0) as revenue,
+                COUNT(id) as orders,
+                COALESCE(AVG(order_total), 0) as aov,
+                COALESCE(MAX(order_total), 0) as max_order
+             FROM $this->table_name 
+             WHERE report_date BETWEEN %s AND %s",
+            $start_date,
+            $end_date
+        ));
+
+        // 📈 Datos del Gráfico (Tendencia diaria)
+        $chart = $wpdb->get_results($wpdb->prepare(
             "SELECT report_date, SUM(order_total) as total_sales 
              FROM $this->table_name 
-             WHERE report_date >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+             WHERE report_date BETWEEN %s AND %s
              GROUP BY report_date 
-             ORDER BY report_date ASC"
-        );
-        wp_send_json_success($results);
+             ORDER BY report_date ASC",
+            $start_date,
+            $end_date
+        ));
+
+        // 🏆 Top Products Leaderboard
+        $leaderboard = $wpdb->get_results($wpdb->prepare(
+            "SELECT 
+                product_name,
+                product_id,
+                SUM(quantity) as total_sold,
+                SUM(line_total) as total_revenue
+             FROM $this->items_table_name 
+             WHERE report_date BETWEEN %s AND %s
+             GROUP BY product_id, product_name
+             ORDER BY total_sold DESC
+             LIMIT 5",
+            $start_date,
+            $end_date
+        ));
+
+        // 🎁 Respuesta Compuesta
+        wp_send_json_success([
+            'kpis' => [
+                'revenue' => floatval($kpis->revenue),
+                'orders' => intval($kpis->orders),
+                'aov' => round(floatval($kpis->aov), 2),
+                'max_order' => floatval($kpis->max_order)
+            ],
+            'chart' => $chart,
+            'leaderboard' => $leaderboard,
+            'period' => [
+                'start' => $start_date,
+                'end' => $end_date,
+                'days' => $days
+            ]
+        ]);
     }
 
     public function enqueue_assets($hook)
@@ -371,86 +532,461 @@ class WooSpeed_Analytics
         wp_enqueue_script('chartjs', 'https://cdn.jsdelivr.net/npm/chart.js', [], null, true);
     }
 
-    // 📟 VISTA DASHBOARD
+    // 📟 VISTA DASHBOARD 2.0 - Premium Analytics
     public function render_dashboard()
     {
-        global $wpdb;
-        $start_time = microtime(true);
-        $total_orders = $wpdb->get_var("SELECT COUNT(*) FROM $this->table_name");
-        $query_time = number_format(microtime(true) - $start_time, 5);
         ?>
-        <div class="wrap">
-            <h1>🚀 WooSpeed Analytics Dashboard</h1>
-            <div
-                style="background: #fff; border-left: 4px solid #007cba; padding: 12px 15px; margin: 15px 0; box-shadow: 0 1px 1px rgba(0,0,0,0.04);">
-                <p style="margin: 0; font-size: 14px; color: #3c434a;">
-                    <b>Estado del Sistema:</b> Arquitectura de Tabla Plana Activa. <br>
-                    <span style="display: inline-block; margin-top: 5px;">
-                        📊 Ventas Procesadas: <b><?php echo number_format($total_orders); ?></b> |
-                        ⚡ Tiempo de Consulta SQL: <b><?php echo $query_time; ?>s</b>
-                    </span>
-                </p>
+        <style>
+            :root {
+                --ws-primary: #6366f1;
+                --ws-primary-light: #818cf8;
+                --ws-success: #10b981;
+                --ws-danger: #ef4444;
+                --ws-gray-50: #f8fafc;
+                --ws-gray-100: #f1f5f9;
+                --ws-gray-200: #e2e8f0;
+                --ws-gray-500: #64748b;
+                --ws-gray-700: #334155;
+                --ws-gray-900: #0f172a;
+            }
+
+            .woospeed-dashboard {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                max-width: 1400px;
+                margin: 20px 0;
+                padding: 0 20px;
+            }
+
+            .ws-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 24px;
+                flex-wrap: wrap;
+                gap: 16px;
+            }
+
+            .ws-header h1 {
+                font-size: 28px;
+                font-weight: 700;
+                color: var(--ws-gray-900);
+                margin: 0;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+
+            .ws-header h1::before {
+                content: '📊';
+                font-size: 32px;
+            }
+
+            .ws-date-select {
+                padding: 10px 16px;
+                border: 1px solid var(--ws-gray-200);
+                border-radius: 8px;
+                font-size: 14px;
+                background: white;
+                cursor: pointer;
+                min-width: 180px;
+            }
+
+            .ws-kpi-grid {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 16px;
+                margin-bottom: 24px;
+            }
+
+            @media (max-width: 1200px) {
+                .ws-kpi-grid {
+                    grid-template-columns: repeat(2, 1fr);
+                }
+            }
+
+            @media (max-width: 600px) {
+                .ws-kpi-grid {
+                    grid-template-columns: 1fr;
+                }
+            }
+
+            .ws-card {
+                background: white;
+                border: 1px solid var(--ws-gray-200);
+                border-radius: 12px;
+                padding: 20px;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+                transition: all 0.25s ease;
+                position: relative;
+                overflow: hidden;
+            }
+
+            .ws-card::before {
+                content: '';
+                position: absolute;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                width: 4px;
+                background: var(--ws-gray-200);
+                transition: all 0.25s ease;
+            }
+
+            .ws-card:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+            }
+
+            .ws-card.revenue::before {
+                background: linear-gradient(180deg, #10b981, #059669);
+            }
+
+            .ws-card.orders::before {
+                background: linear-gradient(180deg, #6366f1, #4f46e5);
+            }
+
+            .ws-card.aov::before {
+                background: linear-gradient(180deg, #f59e0b, #d97706);
+            }
+
+            .ws-card.max::before {
+                background: linear-gradient(180deg, #ec4899, #db2777);
+            }
+
+            .ws-card-inner {
+                display: flex;
+                align-items: flex-start;
+                gap: 16px;
+            }
+
+            .ws-card-icon {
+                width: 44px;
+                height: 44px;
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 20px;
+                flex-shrink: 0;
+            }
+
+            .ws-card-icon.revenue {
+                background: rgba(16, 185, 129, 0.12);
+            }
+
+            .ws-card-icon.orders {
+                background: rgba(99, 102, 241, 0.12);
+            }
+
+            .ws-card-icon.aov {
+                background: rgba(245, 158, 11, 0.12);
+            }
+
+            .ws-card-icon.max {
+                background: rgba(236, 72, 153, 0.12);
+            }
+
+            .ws-card-content {
+                flex: 1;
+                min-width: 0;
+            }
+
+            .ws-card h3 {
+                margin: 0 0 4px;
+                font-size: 11px;
+                text-transform: uppercase;
+                letter-spacing: 0.8px;
+                color: var(--ws-gray-500);
+                font-weight: 600;
+            }
+
+            .ws-value {
+                font-size: 26px;
+                font-weight: 700;
+                color: var(--ws-gray-900);
+                margin: 0;
+                line-height: 1.1;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .ws-main-grid {
+                display: grid;
+                grid-template-columns: 2fr 1fr;
+                gap: 24px;
+            }
+
+            @media (max-width: 1024px) {
+                .ws-main-grid {
+                    grid-template-columns: 1fr;
+                }
+            }
+
+            .ws-chart-container {
+                min-height: 350px;
+            }
+
+            .ws-chart-container canvas {
+                max-height: 320px;
+            }
+
+            .ws-leaderboard h3 {
+                font-size: 16px;
+                font-weight: 600;
+                color: var(--ws-gray-900);
+                margin: 0 0 16px;
+                text-transform: none;
+                letter-spacing: 0;
+            }
+
+            .ws-leaderboard-item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 12px 0;
+                border-bottom: 1px solid var(--ws-gray-100);
+            }
+
+            .ws-leaderboard-item:last-child {
+                border-bottom: none;
+            }
+
+            .ws-leaderboard-rank {
+                width: 28px;
+                height: 28px;
+                border-radius: 50%;
+                background: var(--ws-gray-100);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 600;
+                font-size: 12px;
+                color: var(--ws-gray-700);
+                margin-right: 12px;
+            }
+
+            .ws-leaderboard-rank.gold {
+                background: #fef3c7;
+                color: #92400e;
+            }
+
+            .ws-leaderboard-name {
+                flex: 1;
+                font-weight: 500;
+                color: var(--ws-gray-700);
+            }
+
+            .ws-leaderboard-sold {
+                font-weight: 600;
+                color: var(--ws-primary);
+                background: #eef2ff;
+                padding: 4px 10px;
+                border-radius: 20px;
+                font-size: 13px;
+            }
+
+            .ws-status-bar {
+                background: var(--ws-gray-50);
+                border-radius: 8px;
+                padding: 12px 16px;
+                margin-top: 24px;
+                display: flex;
+                justify-content: space-between;
+                font-size: 13px;
+                color: var(--ws-gray-500);
+            }
+
+            .ws-status-bar strong {
+                color: var(--ws-gray-700);
+            }
+
+            .ws-loading {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 200px;
+                color: var(--ws-gray-500);
+            }
+        </style>
+
+        <div class="woospeed-dashboard">
+            <div class="ws-header">
+                <h1>Performance Overview</h1>
+                <select id="ws-date-range" class="ws-date-select">
+                    <option value="7">Últimos 7 días</option>
+                    <option value="30" selected>Últimos 30 días</option>
+                    <option value="90">Último Trimestre</option>
+                    <option value="365">Este Año</option>
+                </select>
             </div>
 
-            <div
-                style="margin-top: 20px; background: white; padding: 20px; border: 1px solid #ccd0d4; box-shadow: 0 1px 1px rgba(0,0,0,.04);">
-                <canvas id="speedChart" height="100"></canvas>
+            <div class="ws-kpi-grid">
+                <div class="ws-cardrevenue">
+                    <div class="ws-card-inner">
+                        <div class="ws-card-icon revenue">💰</div>
+                        <div class="ws-card-content">
+                            <h3>Ingresos Totales</h3>
+                            <p class="ws-value" id="kpi-revenue">$0.00</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="ws-card orders">
+                    <div class="ws-card-inner">
+                        <div class="ws-card-icon orders">📦</div>
+                        <div class="ws-card-content">
+                            <h3>Pedidos</h3>
+                            <p class="ws-value" id="kpi-orders">0</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="ws-card aov">
+                    <div class="ws-card-inner">
+                        <div class="ws-card-icon aov">📈</div>
+                        <div class="ws-card-content">
+                            <h3>Ticket Promedio</h3>
+                            <p class="ws-value" id="kpi-aov">$0.00</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="ws-card max">
+                    <div class="ws-card-inner">
+                        <div class="ws-card-icon max">🏆</div>
+                        <div class="ws-card-content">
+                            <h3>Pedido Máximo</h3>
+                            <p class="ws-value" id="kpi-max">$0.00</p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <script>
-                document.addEventListener('DOMContentLoaded', function () {
-                    const ctx = document.getElementById('speedChart').getContext('2d');
-                    let speedChart = null;
+            <div class="ws-main-grid">
+                <div class="ws-card ws-chart-container">
+                    <h3
+                        style="margin-bottom:16px; font-size:16px; color:var(--ws-gray-900); text-transform:none; letter-spacing:0;">
+                        📈 Tendencia de Ventas</h3>
+                    <canvas id="speedChart"></canvas>
+                </div>
 
-                    // Función para iniciar la gráfica
-                    function initChart(data) {
-                        speedChart = new Chart(ctx, {
-                            type: 'line',
-                            data: {
-                                labels: data.map(d => d.report_date),
-                                datasets: [{
-                                    label: 'Ingresos Totales ($)',
-                                    data: data.map(d => d.total_sales),
-                                    borderColor: '#007cba',
-                                    backgroundColor: 'rgba(0, 124, 186, 0.1)',
-                                    borderWidth: 2,
-                                    fill: true,
-                                    tension: 0.3
-                                }]
-                            },
-                            options: { responsive: true, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } } }
-                        });
-                    }
+                <div class="ws-card ws-leaderboard">
+                    <h3>🏆 Top Productos</h3>
+                    <div id="leaderboard-container">
+                        <div class="ws-loading">Cargando...</div>
+                    </div>
+                </div>
+            </div>
 
-                    // Función para actualizar datos (Polling)
-                    function updateChart() {
-                        fetch(ajaxurl + '?action=woospeed_get_data')
-                            .then(res => res.json())
-                            .then(response => {
-                                if (!response.success) return;
-
-                                const data = response.data;
-
-                                if (!speedChart) {
-                                    initChart(data);
-                                } else {
-                                    // Actualizar datos existentes
-                                    speedChart.data.labels = data.map(d => d.report_date);
-                                    speedChart.data.datasets[0].data = data.map(d => d.total_sales);
-                                    speedChart.update('none'); // 'none' para evitar parpadeos
-                                }
-                            })
-                            .catch(err => console.error('Error polling data:', err));
-                    }
-
-                    // 1. Carga Inicial
-                    updateChart();
-
-                    // 2. Refresco Automático (Cada 5s)
-                    setInterval(updateChart, 5000);
-                });
-            </script>
+            <div class="ws-status-bar">
+                <span>⚡ Motor: <strong>Tabla Plana + Raw SQL</strong></span>
+                <span id="ws-query-time">Tiempo de carga: --</span>
+            </div>
         </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const ctx = document.getElementById('speedChart').getContext('2d');
+                let speedChart = null;
+                let currentDays = 30;
+
+                // Formatear moneda
+                function formatCurrency(value) {
+                    return '$' + parseFloat(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                }
+
+                // Inicializar Chart
+                function initChart(data) {
+                    speedChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: data.map(d => d.report_date),
+                            datasets: [{
+                                label: 'Ingresos ($)',
+                                data: data.map(d => parseFloat(d.total_sales)),
+                                borderColor: '#6366f1',
+                                backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                                borderWidth: 2,
+                                fill: true,
+                                tension: 0.4,
+                                pointRadius: 3,
+                                pointBackgroundColor: '#6366f1'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            scales: {
+                                y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+                                x: { grid: { display: false } }
+                            }
+                        }
+                    });
+                }
+
+                // Renderizar Leaderboard
+                function renderLeaderboard(items) {
+                    const container = document.getElementById('leaderboard-container');
+                    if (!items || items.length === 0) {
+                        container.innerHTML = '<div class="ws-loading">Sin datos aún</div>';
+                        return;
+                    }
+                    container.innerHTML = items.map((item, i) => `
+                        <div class="ws-leaderboard-item">
+                            <span class="ws-leaderboard-rank ${i === 0 ? 'gold' : ''}">${i + 1}</span>
+                            <span class="ws-leaderboard-name">${item.product_name}</span>
+                            <span class="ws-leaderboard-sold">${item.total_sold} vendidos</span>
+                        </div>
+                    `).join('');
+                }
+
+                // Cargar Dashboard
+                function loadDashboard() {
+                    const startTime = performance.now();
+
+                    fetch(ajaxurl + '?action=woospeed_get_data&days=' + currentDays)
+                        .then(res => res.json())
+                        .then(response => {
+                            if (!response.success) return;
+                            const { kpis, chart, leaderboard } = response.data;
+
+                            // KPIs
+                            document.getElementById('kpi-revenue').textContent = formatCurrency(kpis.revenue);
+                            document.getElementById('kpi-orders').textContent = kpis.orders.toLocaleString();
+                            document.getElementById('kpi-aov').textContent = formatCurrency(kpis.aov);
+                            document.getElementById('kpi-max').textContent = formatCurrency(kpis.max_order);
+
+                            // Chart
+                            if (!speedChart) {
+                                initChart(chart);
+                            } else {
+                                speedChart.data.labels = chart.map(d => d.report_date);
+                                speedChart.data.datasets[0].data = chart.map(d => parseFloat(d.total_sales));
+                                speedChart.update('none');
+                            }
+
+                            // Leaderboard
+                            renderLeaderboard(leaderboard);
+
+                            // Query Time
+                            const elapsed = ((performance.now() - startTime) / 1000).toFixed(3);
+                            document.getElementById('ws-query-time').textContent = 'Tiempo de carga: ' + elapsed + 's';
+                        })
+                        .catch(err => console.error('Dashboard error:', err));
+                }
+
+                // Date Range Change
+                document.getElementById('ws-date-range').addEventListener('change', function () {
+                    currentDays = parseInt(this.value);
+                    loadDashboard();
+                });
+
+                // Initial Load
+                loadDashboard();
+
+                // Auto-refresh cada 10s
+                setInterval(loadDashboard, 10000);
+            });
+        </script>
         <?php
     }
 
@@ -480,6 +1016,42 @@ class WooSpeed_Analytics
                         🧹 Limpieza Completada:
                         Se han eliminado <b><?php echo esc_html($_GET['count']); ?></b> registros de prueba.
                     </p>
+                </div>
+            <?php endif; ?>
+
+            <?php if (isset($_GET['migrated'])): ?>
+                <div class="notice notice-success is-dismissible">
+                    <p>
+                        🔄 Migración Completada:
+                        Se han sincronizado <b><?php echo esc_html($_GET['count']); ?></b> items de productos a la tabla de
+                        leaderboard.
+                    </p>
+                </div>
+            <?php endif; ?>
+
+            <!-- Card de Migración (Si hay órdenes sin items) -->
+            <?php
+            global $wpdb;
+            $orders_count = $wpdb->get_var("SELECT COUNT(*) FROM $this->table_name");
+            $items_count = $wpdb->get_var("SELECT COUNT(DISTINCT order_id) FROM $this->items_table_name");
+            $needs_migration = ($orders_count > 0 && $items_count < $orders_count);
+            ?>
+
+            <?php if ($needs_migration): ?>
+                <div
+                    style="background: #fff3cd; border: 1px solid #ffc107; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                    <h3 style="margin-top:0; color: #856404;">⚠️ Migración Requerida</h3>
+                    <p>Tienes <b><?php echo number_format($orders_count); ?></b> órdenes en el sistema, pero solo
+                        <b><?php echo number_format($items_count); ?></b> tienen sus productos sincronizados para el "Top
+                        Productos".
+                    </p>
+                    <a href="<?php echo admin_url('admin.php?page=woospeed-generator&seed_action=migrate_items'); ?>"
+                        class="button button-primary"
+                        onclick="return confirm('Esto sincronizará los items de todas las órdenes existentes. ¿Continuar?');">
+                        🔄 Migrar Items Ahora
+                    </a>
+                    <p style="font-size: 11px; color: #856404; margin-top: 10px;">* Esto puede tardar unos segundos dependiendo del
+                        número de órdenes.</p>
                 </div>
             <?php endif; ?>
 
