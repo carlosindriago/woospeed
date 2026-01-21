@@ -38,6 +38,9 @@ Instead of using heavy abstraction layers (ORM), pure prepared SQL queries (`$wp
 ### 🎨 Dashboard 2.0 (v2.0.0)
 - **Premium UI:** Modern CSS Grid layout with CSS variables and hover animations.
 - **4 KPI Cards:** Total Revenue, Orders, Average Order Value, Max Order.
+  - Horizontal icon layout with colored left borders (green, purple, orange, pink).
+  - Responsive 4-column grid (adapts to 2/1 columns on smaller screens).
+  - Subtle shadows and smooth hover elevation effects.
 - **Dynamic Date Filter:** 7 days, 30 days, Quarter, or Full Year.
 - **Top Products Leaderboard:** Ranks best-selling products from granular order items.
 - **Real-Time Updates:** Auto-refreshes every 10 seconds via AJAX polling.
