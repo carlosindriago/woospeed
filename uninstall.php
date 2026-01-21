@@ -14,13 +14,15 @@ if (!defined('WP_UNINSTALL_PLUGIN')) {
 
 global $wpdb;
 
-// Definimos el nombre de la tabla (igual que en el plugin principal)
+// Definimos el nombre de las tablas (igual que en el plugin principal)
 $table_name = $wpdb->prefix . 'wc_speed_reports';
+$items_table_name = $wpdb->prefix . 'wc_speed_order_items';
 
 // 🗑️ LA LIMPIEZA:
-// Borramos la tabla completamente.
-// DROP TABLE IF EXISTS evita errores si la tabla ya no existiera.
+// Borramos las tablas completamente.
+// DROP TABLE IF EXISTS evita errores si las tablas ya no existieran.
 $wpdb->query("DROP TABLE IF EXISTS $table_name");
+$wpdb->query("DROP TABLE IF EXISTS $items_table_name");
 
 // (Opcional) Si hubiéramos guardado configuraciones en wp_options, también las borraríamos aquí:
 // delete_option('woospeed_settings');

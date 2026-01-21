@@ -14,6 +14,7 @@ class WooSpeed_Analytics
 
     private static $instance = null;
     private $table_name;
+    private $items_table_name; // Nueva tabla de items granulares
 
     public static function get_instance()
     {
@@ -27,6 +28,7 @@ class WooSpeed_Analytics
     {
         global $wpdb;
         $this->table_name = $wpdb->prefix . 'wc_speed_reports';
+        $this->items_table_name = $wpdb->prefix . 'wc_speed_order_items';
 
         // 1. Hooks de Instalación y Operación
         register_activation_hook(__FILE__, [$this, 'create_table']);
@@ -63,6 +65,22 @@ class WooSpeed_Analytics
 
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
         dbDelta($sql);
+
+        // 🎯 TABLA GRANULAR: Items de cada orden (para Top Products)
+        $sql_items = "CREATE TABLE $this->items_table_name (
+            id mediumint(9) NOT NULL AUTO_INCREMENT,
+            order_id bigint(20) NOT NULL,
+            product_id bigint(20) NOT NULL,
+            product_name varchar(255) NOT NULL,
+            quantity int(11) NOT NULL,
+            line_total decimal(10,2) NOT NULL,
+            report_date date NOT NULL,
+            PRIMARY KEY  (id),
+            KEY order_id (order_id),
+            KEY product_id (product_id),
+            KEY report_date (report_date)
+        ) $charset_collate;";
+        dbDelta($sql_items);
     }
 
     // 🔄 SYNC: El corazón del patrón CQRS
@@ -84,6 +102,25 @@ class WooSpeed_Analytics
             $total,
             $date
         ));
+
+        // 🎯 SYNC ITEMS: Guardar detalle de productos para Top Products
+        // Primero borramos items anteriores (por si es update)
+        $wpdb->delete($this->items_table_name, ['order_id' => $order_id]);
+
+        foreach ($order->get_items() as $item) {
+            $product = $item->get_product();
+            if (!$product)
+                continue;
+
+            $wpdb->insert($this->items_table_name, [
+                'order_id' => $order_id,
+                'product_id' => $product->get_id(),
+                'product_name' => $item->get_name(),
+                'quantity' => $item->get_quantity(),
+                'line_total' => $item->get_total(),
+                'report_date' => $date
+            ]);
+        }
     }
 
     // 🔄 LIFECYCLE: Manejo de cancelaciones y devoluciones
@@ -95,6 +132,7 @@ class WooSpeed_Analytics
         // Borramos la entrada de nuestra tabla de reportes para mantener la verdad.
         if (in_array($to, ['cancelled', 'refunded', 'failed', 'trash'])) {
             $wpdb->delete($this->table_name, ['order_id' => $order_id]);
+            $wpdb->delete($this->items_table_name, ['order_id' => $order_id]); // Limpiar items también
         }
         // Si vuelve a ser 'completed' o 'processing', la sincronizamos
         elseif (in_array($to, ['completed', 'processing'])) {
@@ -171,6 +209,10 @@ class WooSpeed_Analytics
         // 1. Borrar Tabla Plana (Solo IDs altos dummy)
         $deleted_rows = $wpdb->query("DELETE FROM $this->table_name WHERE order_id >= 9000000");
         $count += $deleted_rows;
+
+        // 1.1 Borrar Items de órdenes dummy
+        $deleted_items = $wpdb->query("DELETE FROM $this->items_table_name WHERE order_id >= 9000000");
+        $count += $deleted_items;
 
         // 2. Borrar Productos Dummy (Meta Tag + Legacy Pattern)
         $dummy_products = wc_get_products([
