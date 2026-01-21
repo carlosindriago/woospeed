@@ -823,171 +823,171 @@ class WooSpeed_Analytics
 
             <div class="ws-kpi-grid">
                 <div class="ws-cardrevenue">
-                            <div class="ws-card-inner">
-                                <div class="ws-card-icon revenue">💰</div>
-                                <div class="ws-card-content">
-                                    <h3>Ingresos Totales</h3>
-                                    <p class="ws-value" id="kpi-revenue">$0.00</p>
-                                </div>
-                            </div>
+                    <div class="ws-card-inner">
+                        <div class="ws-card-icon revenue">💰</div>
+                        <div class="ws-card-content">
+                            <h3>Ingresos Totales</h3>
+                            <p class="ws-value" id="kpi-revenue">$0.00</p>
                         </div>
-                        <div class="ws-card orders">
-                            <div class="ws-card-inner">
-                                <div class="ws-card-icon orders">📦</div>
-                                <div class="ws-card-content">
-                                    <h3>Pedidos</h3>
-                                    <p class="ws-value" id="kpi-orders">0</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="ws-card aov">
-                            <div class="ws-card-inner">
-                                <div class="ws-card-icon aov">📈</div>
-                                <div class="ws-card-content">
-                                    <h3>Ticket Promedio</h3>
-                                    <p class="ws-value" id="kpi-aov">$0.00</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="ws-card max">
-                            <div class="ws-card-inner">
-                                <div class="ws-card-icon max">🏆</div>
-                                <div class="ws-card-content">
-                                    <h3>Pedido Máximo</h3>
-                                    <p class="ws-value" id="kpi-max">$0.00</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="ws-main-grid">
-                        <div class="ws-card ws-chart-container">
-                            <h3
-                                style="margin-bottom:16px; font-size:16px; color:var(--ws-gray-900); text-transform:none; letter-spacing:0;">
-                                📈 Tendencia de Ventas</h3>
-                            <canvas id="speedChart"></canvas>
-                        </div>
-
-                        <div class="ws-card ws-leaderboard">
-                            <h3>🏆 Top Productos</h3>
-                            <div id="leaderboard-container">
-                                <div class="ws-loading">Cargando...</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="ws-status-bar">
-                        <span>⚡ Motor: <strong>Tabla Plana + Raw SQL</strong></span>
-                        <span id="ws-query-time">Tiempo de carga: --</span>
                     </div>
                 </div>
+                <div class="ws-card orders">
+                    <div class="ws-card-inner">
+                        <div class="ws-card-icon orders">📦</div>
+                        <div class="ws-card-content">
+                            <h3>Pedidos</h3>
+                            <p class="ws-value" id="kpi-orders">0</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="ws-card aov">
+                    <div class="ws-card-inner">
+                        <div class="ws-card-icon aov">📈</div>
+                        <div class="ws-card-content">
+                            <h3>Ticket Promedio</h3>
+                            <p class="ws-value" id="kpi-aov">$0.00</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="ws-card max">
+                    <div class="ws-card-inner">
+                        <div class="ws-card-icon max">🏆</div>
+                        <div class="ws-card-content">
+                            <h3>Pedido Máximo</h3>
+                            <p class="ws-value" id="kpi-max">$0.00</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                <script>
-                            docum        ent.addEventListener('DOMContentLoaded', function () {
-                                const ctx = document.getElementById('speedChart').getContext('2d');
-                                let speedChart = null;
-                                let currentDays = 30;
+            <div class="ws-main-grid">
+                <div class="ws-card ws-chart-container">
+                    <h3
+                        style="margin-bottom:16px; font-size:16px; color:var(--ws-gray-900); text-transform:none; letter-spacing:0;">
+                        📈 Tendencia de Ventas</h3>
+                    <canvas id="speedChart"></canvas>
+                </div>
 
-                                // Formatear moneda
-                                function formatCurrency(value) {
-                                    return '$' + parseFloat(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                                }
+                <div class="ws-card ws-leaderboard">
+                    <h3>🏆 Top Productos</h3>
+                    <div id="leaderboard-container">
+                        <div class="ws-loading">Cargando...</div>
+                    </div>
+                </div>
+            </div>
 
-                                // Inicializar Chart
-                                function initChart(data) {
-                                    speedChart = new Chart(ctx, {
-                                        type: 'line',
-                                        data: {
-                                            labels: data.map(d => d.report_date),
-                                            datasets: [{
-                                                label: 'Ingresos ($)',
-                                                data: data.map(d => parseFloat(d.total_sales)),
-                                                borderColor: '#6366f1',
-                                                backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                                                borderWidth: 2,
-                                                fill: true,
-                                                tension: 0.4,
-                                                pointRadius: 3,
-                                                pointBackgroundColor: '#6366f1'
-                                            }]
-                                        },
-                                        options: {
-                                            responsive: true,
-                                            maintainAspectRatio: false,
-                                            plugins: { legend: { display: false } },
-                                            scales: {
-                                                y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
-                                                x: { grid: { display: false } }
-                                            }
-                                        }
-                                    });
-                                }
+            <div class="ws-status-bar">
+                <span>⚡ Motor: <strong>Tabla Plana + Raw SQL</strong></span>
+                <span id="ws-query-time">Tiempo de carga: --</span>
+            </div>
+        </div>
 
-                                // Renderizar Leaderboard
-                                function renderLeaderboard(items) {
-                                    const container = document.getElementById('leaderboard-container');
-                                    if (!items || items.length === 0) {
-                                        container.innerHTML = '<div class="ws-loading">Sin datos aún</div>';
-                                        return;
-                                    }
-                                    container.innerHTML = items.map((item, i) => `
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const ctx = document.getElementById('speedChart').getContext('2d');
+                let speedChart = null;
+                let currentDays = 30;
+
+                // Formatear moneda
+                function formatCurrency(value) {
+                    return '$' + parseFloat(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                }
+
+                // Inicializar Chart
+                function initChart(data) {
+                    speedChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: data.map(d => d.report_date),
+                            datasets: [{
+                                label: 'Ingresos ($)',
+                                data: data.map(d => parseFloat(d.total_sales)),
+                                borderColor: '#6366f1',
+                                backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                                borderWidth: 2,
+                                fill: true,
+                                tension: 0.4,
+                                pointRadius: 3,
+                                pointBackgroundColor: '#6366f1'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            scales: {
+                                y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+                                x: { grid: { display: false } }
+                            }
+                        }
+                    });
+                }
+
+                // Renderizar Leaderboard
+                function renderLeaderboard(items) {
+                    const container = document.getElementById('leaderboard-container');
+                    if (!items || items.length === 0) {
+                        container.innerHTML = '<div class="ws-loading">Sin datos aún</div>';
+                        return;
+                    }
+                    container.innerHTML = items.map((item, i) => `
                         <div class="ws-leaderboard-item">
                             <span class="ws-leaderboard-rank ${i === 0 ? 'gold' : ''}">${i + 1}</span>
                             <span class="ws-leaderboard-name">${item.product_name}</span>
                             <span class="ws-leaderboard-sold">${item.total_sold} vendidos</span>
                         </div>
                     `).join('');
-                                }
+                }
 
-                                // Cargar Dashboard
-                                function loadDashboard() {
-                                    const startTime = performance.now();
+                // Cargar Dashboard
+                function loadDashboard() {
+                    const startTime = performance.now();
 
-                                    fetch(ajaxurl + '?action=woospeed_get_data&days=' + currentDays)
-                                        .then(res => res.json())
-                                        .then(response => {
-                                            if (!response.success) return;
-                                            const { kpis, chart, leaderboard } = response.data;
+                    fetch(ajaxurl + '?action=woospeed_get_data&days=' + currentDays)
+                        .then(res => res.json())
+                        .then(response => {
+                            if (!response.success) return;
+                            const { kpis, chart, leaderboard } = response.data;
 
-                                            // KPIs
-                                            document.getElementById('kpi-revenue').textContent = formatCurrency(kpis.revenue);
-                                            document.getElementById('kpi-orders').textContent = kpis.orders.toLocaleString();
-                                            document.getElementById('kpi-aov').textContent = formatCurrency(kpis.aov);
-                                            document.getElementById('kpi-max').textContent = formatCurrency(kpis.max_order);
+                            // KPIs
+                            document.getElementById('kpi-revenue').textContent = formatCurrency(kpis.revenue);
+                            document.getElementById('kpi-orders').textContent = kpis.orders.toLocaleString();
+                            document.getElementById('kpi-aov').textContent = formatCurrency(kpis.aov);
+                            document.getElementById('kpi-max').textContent = formatCurrency(kpis.max_order);
 
-                                            // Chart
-                                            if (!speedChart) {
-                                                initChart(chart);
-                                            } else {
-                                                speedChart.data.labels = chart.map(d => d.report_date);
-                                                speedChart.data.datasets[0].data = chart.map(d => parseFloat(d.total_sales));
-                                                speedChart.update('none');
-                                            }
+                            // Chart
+                            if (!speedChart) {
+                                initChart(chart);
+                            } else {
+                                speedChart.data.labels = chart.map(d => d.report_date);
+                                speedChart.data.datasets[0].data = chart.map(d => parseFloat(d.total_sales));
+                                speedChart.update('none');
+                            }
 
-                                            // Leaderboard
-                                            renderLeaderboard(leaderboard);
+                            // Leaderboard
+                            renderLeaderboard(leaderboard);
 
-                                            // Query Time
-                                            const elapsed = ((performance.now() - startTime) / 1000).toFixed(3);
-                                            document.getElementById('ws-query-time').textContent = 'Tiempo de carga: ' + elapsed + 's';
-                                        })
-                                        .catch(err => console.error('Dashboard error:', err));
-                                }
+                            // Query Time
+                            const elapsed = ((performance.now() - startTime) / 1000).toFixed(3);
+                            document.getElementById('ws-query-time').textContent = 'Tiempo de carga: ' + elapsed + 's';
+                        })
+                        .catch(err => console.error('Dashboard error:', err));
+                }
 
-                                // Date Range Change
-                                document.getElementById('ws-date-range').addEventListener('change', function () {
-                                    currentDays = parseInt(this.value);
-                                    loadDashboard();
-                                });
+                // Date Range Change
+                document.getElementById('ws-date-range').addEventListener('change', function () {
+                    currentDays = parseInt(this.value);
+                    loadDashboard();
+                });
 
-                                // Initial Load
-                                loadDashboard();
+                // Initial Load
+                loadDashboard();
 
-                                // Auto-refresh cada 10s
-                                setInterval(loadDashboard, 10000);
-                            });
-                        </script>
-                        <?php
+                // Auto-refresh cada 10s
+                setInterval(loadDashboard, 10000);
+            });
+        </script>
+        <?php
     }
 
     // 📟 VISTA GENERADOR
@@ -996,196 +996,196 @@ class WooSpeed_Analytics
         // 🛡️ Crear Llave de Seguridad (Nonce)
         $nonce = wp_create_nonce('woospeed_seed_nonce');
         ?>
-                        <div class="wrap">
-                            <h1>🛠️ Generador de Datos Stress-Test</h1>
-                            <p>Utilice estas herramientas para simular actividad de alto tráfico en la tienda.</p>
+        <div class="wrap">
+            <h1>🛠️ Generador de Datos Stress-Test</h1>
+            <p>Utilice estas herramientas para simular actividad de alto tráfico en la tienda.</p>
 
-                            <?php if (isset($_GET['seeded'])): ?>
-                                        <div class="notice notice-success is-dismissible">
-                                            <p>
-                                                ✅ Operación Completada:
-                                                Generados <b><?php echo esc_html($_GET['count']); ?></b> items
-                                                (Tipo: <?php echo esc_html($_GET['type']); ?>).
-                                            </p>
-                                        </div>
-                            <?php endif; ?>
+            <?php if (isset($_GET['seeded'])): ?>
+                <div class="notice notice-success is-dismissible">
+                    <p>
+                        ✅ Operación Completada:
+                        Generados <b><?php echo esc_html($_GET['count']); ?></b> items
+                        (Tipo: <?php echo esc_html($_GET['type']); ?>).
+                    </p>
+                </div>
+            <?php endif; ?>
 
-                            <?php if (isset($_GET['cleared'])): ?>
-                                        <div class="notice notice-warning is-dismissible">
-                                            <p>
-                                                🧹 Limpieza Completada:
-                                                Se han eliminado <b><?php echo esc_html($_GET['count']); ?></b> registros de prueba.
-                                            </p>
-                                        </div>
-                            <?php endif; ?>
+            <?php if (isset($_GET['cleared'])): ?>
+                <div class="notice notice-warning is-dismissible">
+                    <p>
+                        🧹 Limpieza Completada:
+                        Se han eliminado <b><?php echo esc_html($_GET['count']); ?></b> registros de prueba.
+                    </p>
+                </div>
+            <?php endif; ?>
 
-                            <?php if (isset($_GET['migrated'])): ?>
-                                        <div class="notice notice-success is-dismissible">
-                                            <p>
-                                                🔄 Migración Completada:
-                                                Se han sincronizado <b><?php echo esc_html($_GET['count']); ?></b> items de productos a la tabla de
-                                                leaderboard.
-                                            </p>
-                                        </div>
-                            <?php endif; ?>
+            <?php if (isset($_GET['migrated'])): ?>
+                <div class="notice notice-success is-dismissible">
+                    <p>
+                        🔄 Migración Completada:
+                        Se han sincronizado <b><?php echo esc_html($_GET['count']); ?></b> items de productos a la tabla de
+                        leaderboard.
+                    </p>
+                </div>
+            <?php endif; ?>
 
-                            <!-- Card de Migración (Si hay órdenes sin items) -->
-                            <?php
-                            global $wpdb;
-                            $orders_count = $wpdb->get_var("SELECT COUNT(*) FROM $this->table_name");
-                            $items_count = $wpdb->get_var("SELECT COUNT(DISTINCT order_id) FROM $this->items_table_name");
-                            $needs_migration = ($orders_count > 0 && $items_count < $orders_count);
-                            ?>
+            <!-- Card de Migración (Si hay órdenes sin items) -->
+            <?php
+            global $wpdb;
+            $orders_count = $wpdb->get_var("SELECT COUNT(*) FROM $this->table_name");
+            $items_count = $wpdb->get_var("SELECT COUNT(DISTINCT order_id) FROM $this->items_table_name");
+            $needs_migration = ($orders_count > 0 && $items_count < $orders_count);
+            ?>
 
-                            <?php if ($needs_migration): ?>
-                                        <div
-                                            style="background: #fff3cd; border: 1px solid #ffc107; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 4px;">
-                                            <h3 style="margin-top:0; color: #856404;">⚠️ Migración Requerida</h3>
-                                            <p>Tienes <b><?php echo number_format($orders_count); ?></b> órdenes en el sistema, pero solo
-                                                <b><?php echo number_format($items_count); ?></b> tienen sus productos sincronizados para el "Top
-                                                Productos".
-                                            </p>
-                                            <a href="<?php echo admin_url('admin.php?page=woospeed-generator&seed_action=migrate_items'); ?>"
-                                                class="button button-primary"
-                                                onclick="return confirm('Esto sincronizará los items de todas las órdenes existentes. ¿Continuar?');">
-                                                🔄 Migrar Items Ahora
-                                            </a>
-                                            <p style="font-size: 11px; color: #856404; margin-top: 10px;">* Esto puede tardar unos segundos dependiendo del
-                                                número de órdenes.</p>
-                                        </div>
-                            <?php endif; ?>
+            <?php if ($needs_migration): ?>
+                <div
+                    style="background: #fff3cd; border: 1px solid #ffc107; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                    <h3 style="margin-top:0; color: #856404;">⚠️ Migración Requerida</h3>
+                    <p>Tienes <b><?php echo number_format($orders_count); ?></b> órdenes en el sistema, pero solo
+                        <b><?php echo number_format($items_count); ?></b> tienen sus productos sincronizados para el "Top
+                        Productos".
+                    </p>
+                    <a href="<?php echo admin_url('admin.php?page=woospeed-generator&seed_action=migrate_items'); ?>"
+                        class="button button-primary"
+                        onclick="return confirm('Esto sincronizará los items de todas las órdenes existentes. ¿Continuar?');">
+                        🔄 Migrar Items Ahora
+                    </a>
+                    <p style="font-size: 11px; color: #856404; margin-top: 10px;">* Esto puede tardar unos segundos dependiendo del
+                        número de órdenes.</p>
+                </div>
+            <?php endif; ?>
 
-                            <!-- Barra de Progreso (Oculta por defecto) -->
-                            <div id="seed-progress-container"
-                                style="display:none; margin-top: 20px; background: #fff; padding: 20px; border: 1px solid #ccd0d4; box-shadow: 0 1px 2px rgba(0,0,0,.05);">
-                                <h3>⏳ Generando Datos Masivos...</h3>
-                                <p>Por favor no cierres esta pestaña. Procesando <span id="processed-count">0</span> de <span
-                                        id="total-count">0</span>...</p>
-                                <progress id="seed-progress" value="0" max="100" style="width: 100%; height: 30px;"></progress>
-                            </div>
+            <!-- Barra de Progreso (Oculta por defecto) -->
+            <div id="seed-progress-container"
+                style="display:none; margin-top: 20px; background: #fff; padding: 20px; border: 1px solid #ccd0d4; box-shadow: 0 1px 2px rgba(0,0,0,.05);">
+                <h3>⏳ Generando Datos Masivos...</h3>
+                <p>Por favor no cierres esta pestaña. Procesando <span id="processed-count">0</span> de <span
+                        id="total-count">0</span>...</p>
+                <progress id="seed-progress" value="0" max="100" style="width: 100%; height: 30px;"></progress>
+            </div>
 
-                            <div style="display: flex; gap: 20px; margin-top: 20px;">
-                                <!-- Card 1: Productos (Paso 1) -->
-                                <div
-                                    style="flex: 1; background: #fff; padding: 20px; border: 1px solid #ccd0d4; box-shadow: 0 1px 2px rgba(0,0,0,.05); border-top: 4px solid #F5B041;">
-                                    <h3>1. Primero: Productos Dummy</h3>
-                                    <p>Genera <b>20 Productos Reales</b>. Es <b>obligatorio</b> tener productos antes de simular ventas.</p>
-                                    <a href="<?php echo admin_url('admin.php?page=woospeed-generator&seed_action=products_20'); ?>"
-                                        class="button button-secondary" style="width:100%; margin-top:10px;"
-                                        onclick="return confirm('¿Crear 20 Productos Reales?');">
-                                        📦 Generar Productos (Paso 1)
-                                    </a>
-                                    <p style="font-size: 11px; color: #666; margin-top: 5px;">* Las órdenes usarán estos productos.</p>
-                                </div>
+            <div style="display: flex; gap: 20px; margin-top: 20px;">
+                <!-- Card 1: Productos (Paso 1) -->
+                <div
+                    style="flex: 1; background: #fff; padding: 20px; border: 1px solid #ccd0d4; box-shadow: 0 1px 2px rgba(0,0,0,.05); border-top: 4px solid #F5B041;">
+                    <h3>1. Primero: Productos Dummy</h3>
+                    <p>Genera <b>20 Productos Reales</b>. Es <b>obligatorio</b> tener productos antes de simular ventas.</p>
+                    <a href="<?php echo admin_url('admin.php?page=woospeed-generator&seed_action=products_20'); ?>"
+                        class="button button-secondary" style="width:100%; margin-top:10px;"
+                        onclick="return confirm('¿Crear 20 Productos Reales?');">
+                        📦 Generar Productos (Paso 1)
+                    </a>
+                    <p style="font-size: 11px; color: #666; margin-top: 5px;">* Las órdenes usarán estos productos.</p>
+                </div>
 
-                                <!-- Card 2: Masiva (Paso 2) -->
-                                <div
-                                    style="flex: 1; background: #fff; padding: 20px; border: 1px solid #ccd0d4; box-shadow: 0 1px 2px rgba(0,0,0,.05); border-top: 4px solid #007cba;">
-                                    <h3>2. Segundo: Carga Masiva (5k)</h3>
-                                    <p>Genera <b>5,000 Pedidos Reales</b> usando los productos del paso 1. <br>Refleja una carga real.</p>
-                                    <button id="btn-start-batch" class="button button-primary" style="width:100%; margin-top:10px;">
-                                        🚀 Iniciar Carga Masiva (Paso 2)
-                                    </button>
-                                    <p style="font-size: 11px; color: #666; margin-top: 5px;">* Se ejecutará en 10 tandas de 500.</p>
-                                </div>
+                <!-- Card 2: Masiva (Paso 2) -->
+                <div
+                    style="flex: 1; background: #fff; padding: 20px; border: 1px solid #ccd0d4; box-shadow: 0 1px 2px rgba(0,0,0,.05); border-top: 4px solid #007cba;">
+                    <h3>2. Segundo: Carga Masiva (5k)</h3>
+                    <p>Genera <b>5,000 Pedidos Reales</b> usando los productos del paso 1. <br>Refleja una carga real.</p>
+                    <button id="btn-start-batch" class="button button-primary" style="width:100%; margin-top:10px;">
+                        🚀 Iniciar Carga Masiva (Paso 2)
+                    </button>
+                    <p style="font-size: 11px; color: #666; margin-top: 5px;">* Se ejecutará en 10 tandas de 500.</p>
+                </div>
 
-                                <!-- Card 3 -->
-                                <div
-                                    style="flex: 1; background: #fff; padding: 20px; border: 1px solid #ccd0d4; box-shadow: 0 1px 2px rgba(0,0,0,.05);">
-                                    <h3>3. Test Rápido (50)</h3>
-                                    <p>Prueba rápida de sincronización con 50 pedidos (opcional).</p>
-                                    <a href="<?php echo admin_url('admin.php?page=woospeed-generator&seed_action=orders_50'); ?>"
-                                        class="button button-secondary" onclick="return confirm('¿Crear 50 Pedidos Reales?');">
-                                        🛒 Generar 50 Pedidos
-                                    </a>
-                                </div>
-                            </div>
+                <!-- Card 3 -->
+                <div
+                    style="flex: 1; background: #fff; padding: 20px; border: 1px solid #ccd0d4; box-shadow: 0 1px 2px rgba(0,0,0,.05);">
+                    <h3>3. Test Rápido (50)</h3>
+                    <p>Prueba rápida de sincronización con 50 pedidos (opcional).</p>
+                    <a href="<?php echo admin_url('admin.php?page=woospeed-generator&seed_action=orders_50'); ?>"
+                        class="button button-secondary" onclick="return confirm('¿Crear 50 Pedidos Reales?');">
+                        🛒 Generar 50 Pedidos
+                    </a>
+                </div>
+            </div>
 
-                            <script>
-                                document.addEventListener('DOMContentLoaded', function () {
-                                    const btn = document.getElementById('btn-start-batch');
-                                    const progressContainer = document.getElementById('seed-progress-container');
-                                    const progressBar = document.getElementById('seed-progress');
-                                    const processedSpan = document.getElementById('processed-count');
-                                    const totalSpan = document.getElementById('total-count');
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    const btn = document.getElementById('btn-start-batch');
+                    const progressContainer = document.getElementById('seed-progress-container');
+                    const progressBar = document.getElementById('seed-progress');
+                    const processedSpan = document.getElementById('processed-count');
+                    const totalSpan = document.getElementById('total-count');
 
-                                    // 🛡️ Definir la llave de seguridad para JS
-                                    const securityNonce = "<?php echo $nonce; ?>";
+                    // 🛡️ Definir la llave de seguridad para JS
+                    const securityNonce = "<?php echo $nonce; ?>";
 
-                                    const TOTAL_ORDERS = 5000;
-                                    const BATCH_SIZE = 500;
-                                    let processed = 0;
+                    const TOTAL_ORDERS = 5000;
+                    const BATCH_SIZE = 500;
+                    let processed = 0;
 
-                                    btn.addEventListener('click', function () {
-                                        if (!confirm('Esto generará 5,000 pedidos reales. ¿Continuar?')) return;
+                    btn.addEventListener('click', function () {
+                        if (!confirm('Esto generará 5,000 pedidos reales. ¿Continuar?')) return;
 
-                                        btn.disabled = true;
-                                        progressContainer.style.display = 'block';
-                                        processed = 0;
-                                        totalSpan.innerText = TOTAL_ORDERS;
-                                        progressBar.value = 0;
+                        btn.disabled = true;
+                        progressContainer.style.display = 'block';
+                        processed = 0;
+                        totalSpan.innerText = TOTAL_ORDERS;
+                        progressBar.value = 0;
 
-                                        processBatch();
-                                    });
+                        processBatch();
+                    });
 
-                                    function processBatch() {
-                                        if (processed >= TOTAL_ORDERS) {
-                                            alert('✅ ¡Proceso Terminado! 5,000 Pedidos Generados.');
-                                            window.location.reload();
-                                            return;
-                                        }
+                    function processBatch() {
+                        if (processed >= TOTAL_ORDERS) {
+                            alert('✅ ¡Proceso Terminado! 5,000 Pedidos Generados.');
+                            window.location.reload();
+                            return;
+                        }
 
-                                        const data = new FormData();
-                                        data.append('action', 'woospeed_seed_batch');
-                                        data.append('batch_size', BATCH_SIZE);
-                                        data.append('security', securityNonce); // 🛡️ Enviamos la llave al servidor
+                        const data = new FormData();
+                        data.append('action', 'woospeed_seed_batch');
+                        data.append('batch_size', BATCH_SIZE);
+                        data.append('security', securityNonce); // 🛡️ Enviamos la llave al servidor
 
-                                        fetch(ajaxurl, {
-                                            method: 'POST',
-                                            body: data
-                                        })
-                                            .then(res => res.json())
-                                            .then(response => {
-                                                if (response.success) {
-                                                    processed += BATCH_SIZE;
-                                                    const percent = Math.min(100, (processed / TOTAL_ORDERS) * 100);
-                                                    progressBar.value = percent;
-                                                    processedSpan.innerText = Math.min(processed, TOTAL_ORDERS);
+                        fetch(ajaxurl, {
+                            method: 'POST',
+                            body: data
+                        })
+                            .then(res => res.json())
+                            .then(response => {
+                                if (response.success) {
+                                    processed += BATCH_SIZE;
+                                    const percent = Math.min(100, (processed / TOTAL_ORDERS) * 100);
+                                    progressBar.value = percent;
+                                    processedSpan.innerText = Math.min(processed, TOTAL_ORDERS);
 
-                                                    // Recursión
-                                                    processBatch();
-                                                } else {
-                                                    alert('Error en el proceso: ' + response.data);
-                                                    btn.disabled = false;
-                                                }
-                                            })
-                                            .catch(err => {
-                                                alert('Error de red. Intenta de nuevo.');
-                                                btn.disabled = false;
-                                            });
-                                    }
-                                });
-                            </script>
+                                    // Recursión
+                                    processBatch();
+                                } else {
+                                    alert('Error en el proceso: ' + response.data);
+                                    btn.disabled = false;
+                                }
+                            })
+                            .catch(err => {
+                                alert('Error de red. Intenta de nuevo.');
+                                btn.disabled = false;
+                            });
+                    }
+                });
+            </script>
 
-                            <div style="margin-top: 20px;">
-                                <p><i>Nota: Las órdenes reales aparecerán en "WooCommerce > Pedidos" y se sincronizarán automáticamente con el
-                                        Dashboard de Speed Analytics.</i></p>
-                            </div>
+            <div style="margin-top: 20px;">
+                <p><i>Nota: Las órdenes reales aparecerán en "WooCommerce > Pedidos" y se sincronizarán automáticamente con el
+                        Dashboard de Speed Analytics.</i></p>
+            </div>
 
-                            <!-- Danger Zone -->
-                            <div
-                                style="margin-top: 30px; background: #fff; padding: 20px; border: 1px solid #dc3232; box-shadow: 0 1px 2px rgba(0,0,0,.05); border-left-width: 4px;">
-                                <h3 style="color: #dc3232; margin-top:0;">⚠️ Zona de Limpieza</h3>
-                                <p>Borra TODOS los datos generados por este plugin (Tabla Plana, Productos Dummy, Órdenes Dummy).</p>
-                                <a href="<?php echo admin_url('admin.php?page=woospeed-generator&seed_action=clear_all'); ?>"
-                                    class="button button-link-delete"
-                                    style="color: #a00; text-decoration: none; border: 1px solid #dc3232; padding: 5px 10px; border-radius: 3px;"
-                                    onclick="return confirm('¿ESTÁS SEGURO? Esto borrará todos los datos de prueba generados.');">
-                                    🗑️ BORRAR TODOS LOS DATOS DUMMY
-                                </a>
-                            </div>
-                        </div>
-                        <?php
+            <!-- Danger Zone -->
+            <div
+                style="margin-top: 30px; background: #fff; padding: 20px; border: 1px solid #dc3232; box-shadow: 0 1px 2px rgba(0,0,0,.05); border-left-width: 4px;">
+                <h3 style="color: #dc3232; margin-top:0;">⚠️ Zona de Limpieza</h3>
+                <p>Borra TODOS los datos generados por este plugin (Tabla Plana, Productos Dummy, Órdenes Dummy).</p>
+                <a href="<?php echo admin_url('admin.php?page=woospeed-generator&seed_action=clear_all'); ?>"
+                    class="button button-link-delete"
+                    style="color: #a00; text-decoration: none; border: 1px solid #dc3232; padding: 5px 10px; border-radius: 3px;"
+                    onclick="return confirm('¿ESTÁS SEGURO? Esto borrará todos los datos de prueba generados.');">
+                    🗑️ BORRAR TODOS LOS DATOS DUMMY
+                </a>
+            </div>
+        </div>
+        <?php
     }
 }
 
