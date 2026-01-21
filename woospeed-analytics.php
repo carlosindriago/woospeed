@@ -2,7 +2,7 @@
 /*
 Plugin Name: WooSpeed Analytics 🚀
 Description: Herramienta para WooCommerce con arquitectura de alto rendimiento para generar reportes en 0.01s usando Tablas Planas y Raw SQL.
-Version: 1.2.0
+Version: 2.0.0
 Author: Carlos Indriago
 */
 

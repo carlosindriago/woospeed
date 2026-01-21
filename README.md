@@ -35,6 +35,14 @@ Instead of using heavy abstraction layers (ORM), pure prepared SQL queries (`$wp
 - **Email Suppression:** WooCommerce emails are disabled during dummy order generation to prevent spam.
 - **Smart Tagging:** All dummy orders/products are tagged with `_woospeed_dummy` for reliable cleanup.
 
+### 🎨 Dashboard 2.0 (v2.0.0)
+- **Premium UI:** Modern CSS Grid layout with CSS variables and hover animations.
+- **4 KPI Cards:** Total Revenue, Orders, Average Order Value, Max Order.
+- **Dynamic Date Filter:** 7 days, 30 days, Quarter, or Full Year.
+- **Top Products Leaderboard:** Ranks best-selling products from granular order items.
+- **Real-Time Updates:** Auto-refreshes every 10 seconds via AJAX polling.
+- **Granular Data Table:** `wp_wc_speed_order_items` stores individual product data for detailed analytics.
+
 ## 🚀 Installation
 
 1. Clone this repository into your `wp-content/plugins/` directory:
