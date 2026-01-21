@@ -467,86 +467,390 @@ class WooSpeed_Analytics
         wp_enqueue_script('chartjs', 'https://cdn.jsdelivr.net/npm/chart.js', [], null, true);
     }
 
-    // 📟 VISTA DASHBOARD
+    // 📟 VISTA DASHBOARD 2.0 - Premium Analytics
     public function render_dashboard()
     {
-        global $wpdb;
-        $start_time = microtime(true);
-        $total_orders = $wpdb->get_var("SELECT COUNT(*) FROM $this->table_name");
-        $query_time = number_format(microtime(true) - $start_time, 5);
         ?>
-        <div class="wrap">
-            <h1>🚀 WooSpeed Analytics Dashboard</h1>
-            <div
-                style="background: #fff; border-left: 4px solid #007cba; padding: 12px 15px; margin: 15px 0; box-shadow: 0 1px 1px rgba(0,0,0,0.04);">
-                <p style="margin: 0; font-size: 14px; color: #3c434a;">
-                    <b>Estado del Sistema:</b> Arquitectura de Tabla Plana Activa. <br>
-                    <span style="display: inline-block; margin-top: 5px;">
-                        📊 Ventas Procesadas: <b><?php echo number_format($total_orders); ?></b> |
-                        ⚡ Tiempo de Consulta SQL: <b><?php echo $query_time; ?>s</b>
-                    </span>
-                </p>
+        <style>
+            :root {
+                --ws-primary: #6366f1;
+                --ws-primary-light: #818cf8;
+                --ws-success: #10b981;
+                --ws-danger: #ef4444;
+                --ws-gray-50: #f8fafc;
+                --ws-gray-100: #f1f5f9;
+                --ws-gray-200: #e2e8f0;
+                --ws-gray-500: #64748b;
+                --ws-gray-700: #334155;
+                --ws-gray-900: #0f172a;
+            }
+
+            .woospeed-dashboard {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                max-width: 1400px;
+                margin: 20px 0;
+                padding: 0 20px;
+            }
+
+            .ws-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 24px;
+                flex-wrap: wrap;
+                gap: 16px;
+            }
+
+            .ws-header h1 {
+                font-size: 28px;
+                font-weight: 700;
+                color: var(--ws-gray-900);
+                margin: 0;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+
+            .ws-header h1::before {
+                content: '📊';
+                font-size: 32px;
+            }
+
+            .ws-date-select {
+                padding: 10px 16px;
+                border: 1px solid var(--ws-gray-200);
+                border-radius: 8px;
+                font-size: 14px;
+                background: white;
+                cursor: pointer;
+                min-width: 180px;
+            }
+
+            .ws-kpi-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+                gap: 20px;
+                margin-bottom: 24px;
+            }
+
+            .ws-card {
+                background: white;
+                border: 1px solid var(--ws-gray-200);
+                border-radius: 12px;
+                padding: 24px;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+                transition: transform 0.2s, box-shadow 0.2s;
+            }
+
+            .ws-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            }
+
+            .ws-card h3 {
+                margin: 0 0 8px;
+                font-size: 13px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                color: var(--ws-gray-500);
+                font-weight: 600;
+            }
+
+            .ws-value {
+                font-size: 32px;
+                font-weight: 700;
+                color: var(--ws-gray-900);
+                margin: 0;
+                line-height: 1.2;
+            }
+
+            .ws-card-icon {
+                width: 48px;
+                height: 48px;
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 24px;
+                margin-bottom: 16px;
+            }
+
+            .ws-card-icon.revenue {
+                background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            }
+
+            .ws-card-icon.orders {
+                background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            }
+
+            .ws-card-icon.aov {
+                background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            }
+
+            .ws-card-icon.max {
+                background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+            }
+
+            .ws-main-grid {
+                display: grid;
+                grid-template-columns: 2fr 1fr;
+                gap: 24px;
+            }
+
+            @media (max-width: 1024px) {
+                .ws-main-grid {
+                    grid-template-columns: 1fr;
+                }
+            }
+
+            .ws-chart-container {
+                min-height: 350px;
+            }
+
+            .ws-chart-container canvas {
+                max-height: 320px;
+            }
+
+            .ws-leaderboard h3 {
+                font-size: 16px;
+                font-weight: 600;
+                color: var(--ws-gray-900);
+                margin: 0 0 16px;
+                text-transform: none;
+                letter-spacing: 0;
+            }
+
+            .ws-leaderboard-item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 12px 0;
+                border-bottom: 1px solid var(--ws-gray-100);
+            }
+
+            .ws-leaderboard-item:last-child {
+                border-bottom: none;
+            }
+
+            .ws-leaderboard-rank {
+                width: 28px;
+                height: 28px;
+                border-radius: 50%;
+                background: var(--ws-gray-100);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 600;
+                font-size: 12px;
+                color: var(--ws-gray-700);
+                margin-right: 12px;
+            }
+
+            .ws-leaderboard-rank.gold {
+                background: #fef3c7;
+                color: #92400e;
+            }
+
+            .ws-leaderboard-name {
+                flex: 1;
+                font-weight: 500;
+                color: var(--ws-gray-700);
+            }
+
+            .ws-leaderboard-sold {
+                font-weight: 600;
+                color: var(--ws-primary);
+                background: #eef2ff;
+                padding: 4px 10px;
+                border-radius: 20px;
+                font-size: 13px;
+            }
+
+            .ws-status-bar {
+                background: var(--ws-gray-50);
+                border-radius: 8px;
+                padding: 12px 16px;
+                margin-top: 24px;
+                display: flex;
+                justify-content: space-between;
+                font-size: 13px;
+                color: var(--ws-gray-500);
+            }
+
+            .ws-status-bar strong {
+                color: var(--ws-gray-700);
+            }
+
+            .ws-loading {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 200px;
+                color: var(--ws-gray-500);
+            }
+        </style>
+
+        <div class="woospeed-dashboard">
+            <div class="ws-header">
+                <h1>Performance Overview</h1>
+                <select id="ws-date-range" class="ws-date-select">
+                    <option value="7">Últimos 7 días</option>
+                    <option value="30" selected>Últimos 30 días</option>
+                    <option value="90">Último Trimestre</option>
+                    <option value="365">Este Año</option>
+                </select>
             </div>
 
-            <div
-                style="margin-top: 20px; background: white; padding: 20px; border: 1px solid #ccd0d4; box-shadow: 0 1px 1px rgba(0,0,0,.04);">
-                <canvas id="speedChart" height="100"></canvas>
+            <div class="ws-kpi-grid">
+                <div class="ws-card">
+                    <div class="ws-card-icon revenue">💰</div>
+                    <h3>Ingresos Totales</h3>
+                    <p class="ws-value" id="kpi-revenue">$0.00</p>
+                </div>
+                <div class="ws-card">
+                    <div class="ws-card-icon orders">📦</div>
+                    <h3>Pedidos</h3>
+                    <p class="ws-value" id="kpi-orders">0</p>
+                </div>
+                <div class="ws-card">
+                    <div class="ws-card-icon aov">📈</div>
+                    <h3>Ticket Promedio</h3>
+                    <p class="ws-value" id="kpi-aov">$0.00</p>
+                </div>
+                <div class="ws-card">
+                    <div class="ws-card-icon max">🏆</div>
+                    <h3>Pedido Máximo</h3>
+                    <p class="ws-value" id="kpi-max">$0.00</p>
+                </div>
             </div>
 
-            <script>
-                document.addEventListener('DOMContentLoaded', function () {
-                    const ctx = document.getElementById('speedChart').getContext('2d');
-                    let speedChart = null;
+            <div class="ws-main-grid">
+                <div class="ws-card ws-chart-container">
+                    <h3
+                        style="margin-bottom:16px; font-size:16px; color:var(--ws-gray-900); text-transform:none; letter-spacing:0;">
+                        📈 Tendencia de Ventas</h3>
+                    <canvas id="speedChart"></canvas>
+                </div>
 
-                    // Función para iniciar la gráfica
-                    function initChart(data) {
-                        speedChart = new Chart(ctx, {
-                            type: 'line',
-                            data: {
-                                labels: data.map(d => d.report_date),
-                                datasets: [{
-                                    label: 'Ingresos Totales ($)',
-                                    data: data.map(d => d.total_sales),
-                                    borderColor: '#007cba',
-                                    backgroundColor: 'rgba(0, 124, 186, 0.1)',
-                                    borderWidth: 2,
-                                    fill: true,
-                                    tension: 0.3
-                                }]
-                            },
-                            options: { responsive: true, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } } }
-                        });
-                    }
+                <div class="ws-card ws-leaderboard">
+                    <h3>🏆 Top Productos</h3>
+                    <div id="leaderboard-container">
+                        <div class="ws-loading">Cargando...</div>
+                    </div>
+                </div>
+            </div>
 
-                    // Función para actualizar datos (Polling)
-                    function updateChart() {
-                        fetch(ajaxurl + '?action=woospeed_get_data')
-                            .then(res => res.json())
-                            .then(response => {
-                                if (!response.success) return;
-
-                                const data = response.data;
-
-                                if (!speedChart) {
-                                    initChart(data);
-                                } else {
-                                    // Actualizar datos existentes
-                                    speedChart.data.labels = data.map(d => d.report_date);
-                                    speedChart.data.datasets[0].data = data.map(d => d.total_sales);
-                                    speedChart.update('none'); // 'none' para evitar parpadeos
-                                }
-                            })
-                            .catch(err => console.error('Error polling data:', err));
-                    }
-
-                    // 1. Carga Inicial
-                    updateChart();
-
-                    // 2. Refresco Automático (Cada 5s)
-                    setInterval(updateChart, 5000);
-                });
-            </script>
+            <div class="ws-status-bar">
+                <span>⚡ Motor: <strong>Tabla Plana + Raw SQL</strong></span>
+                <span id="ws-query-time">Tiempo de carga: --</span>
+            </div>
         </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const ctx = document.getElementById('speedChart').getContext('2d');
+                let speedChart = null;
+                let currentDays = 30;
+
+                // Formatear moneda
+                function formatCurrency(value) {
+                    return '$' + parseFloat(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                }
+
+                // Inicializar Chart
+                function initChart(data) {
+                    speedChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: data.map(d => d.report_date),
+                            datasets: [{
+                                label: 'Ingresos ($)',
+                                data: data.map(d => parseFloat(d.total_sales)),
+                                borderColor: '#6366f1',
+                                backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                                borderWidth: 2,
+                                fill: true,
+                                tension: 0.4,
+                                pointRadius: 3,
+                                pointBackgroundColor: '#6366f1'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            scales: {
+                                y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+                                x: { grid: { display: false } }
+                            }
+                        }
+                    });
+                }
+
+                // Renderizar Leaderboard
+                function renderLeaderboard(items) {
+                    const container = document.getElementById('leaderboard-container');
+                    if (!items || items.length === 0) {
+                        container.innerHTML = '<div class="ws-loading">Sin datos aún</div>';
+                        return;
+                    }
+                    container.innerHTML = items.map((item, i) => `
+                        <div class="ws-leaderboard-item">
+                            <span class="ws-leaderboard-rank ${i === 0 ? 'gold' : ''}">${i + 1}</span>
+                            <span class="ws-leaderboard-name">${item.product_name}</span>
+                            <span class="ws-leaderboard-sold">${item.total_sold} vendidos</span>
+                        </div>
+                    `).join('');
+                }
+
+                // Cargar Dashboard
+                function loadDashboard() {
+                    const startTime = performance.now();
+
+                    fetch(ajaxurl + '?action=woospeed_get_data&days=' + currentDays)
+                        .then(res => res.json())
+                        .then(response => {
+                            if (!response.success) return;
+                            const { kpis, chart, leaderboard } = response.data;
+
+                            // KPIs
+                            document.getElementById('kpi-revenue').textContent = formatCurrency(kpis.revenue);
+                            document.getElementById('kpi-orders').textContent = kpis.orders.toLocaleString();
+                            document.getElementById('kpi-aov').textContent = formatCurrency(kpis.aov);
+                            document.getElementById('kpi-max').textContent = formatCurrency(kpis.max_order);
+
+                            // Chart
+                            if (!speedChart) {
+                                initChart(chart);
+                            } else {
+                                speedChart.data.labels = chart.map(d => d.report_date);
+                                speedChart.data.datasets[0].data = chart.map(d => parseFloat(d.total_sales));
+                                speedChart.update('none');
+                            }
+
+                            // Leaderboard
+                            renderLeaderboard(leaderboard);
+
+                            // Query Time
+                            const elapsed = ((performance.now() - startTime) / 1000).toFixed(3);
+                            document.getElementById('ws-query-time').textContent = 'Tiempo de carga: ' + elapsed + 's';
+                        })
+                        .catch(err => console.error('Dashboard error:', err));
+                }
+
+                // Date Range Change
+                document.getElementById('ws-date-range').addEventListener('change', function () {
+                    currentDays = parseInt(this.value);
+                    loadDashboard();
+                });
+
+                // Initial Load
+                loadDashboard();
+
+                // Auto-refresh cada 10s
+                setInterval(loadDashboard, 10000);
+            });
+        </script>
         <?php
     }
 
