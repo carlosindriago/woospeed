@@ -45,6 +45,22 @@ class WooSpeed_Analytics
 
         // 4. Seeder Handlers
         add_action('admin_init', [$this, 'handle_seed_actions']);
+
+        // 5. Auto-upgrade: Crear tabla items si no existe
+        add_action('admin_init', [$this, 'maybe_upgrade_tables']);
+    }
+
+    // 🔄 AUTO-UPGRADE: Crear tablas faltantes
+    public function maybe_upgrade_tables()
+    {
+        global $wpdb;
+
+        // Verificar si la tabla de items existe
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$this->items_table_name'");
+
+        if (!$table_exists) {
+            $this->create_table(); // Esto creará ambas tablas (dbDelta es idempotente)
+        }
     }
 
     // 🏗️ ARQUITECTURA: Tabla Plana Optimizada
@@ -956,7 +972,8 @@ class WooSpeed_Analytics
                     <h3 style="margin-top:0; color: #856404;">⚠️ Migración Requerida</h3>
                     <p>Tienes <b><?php echo number_format($orders_count); ?></b> órdenes en el sistema, pero solo
                         <b><?php echo number_format($items_count); ?></b> tienen sus productos sincronizados para el "Top
-                        Productos".</p>
+                        Productos".
+                    </p>
                     <a href="<?php echo admin_url('admin.php?page=woospeed-generator&seed_action=migrate_items'); ?>"
                         class="button button-primary"
                         onclick="return confirm('Esto sincronizará los items de todas las órdenes existentes. ¿Continuar?');">
