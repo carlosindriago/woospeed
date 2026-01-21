@@ -46,6 +46,16 @@ Instead of using heavy abstraction layers (ORM), pure prepared SQL queries (`$wp
 - **Real-Time Updates:** Auto-refreshes every 10 seconds via AJAX polling.
 - **Granular Data Table:** `wp_wc_speed_order_items` stores individual product data for detailed analytics.
 
+### 🔥 Senior Architecture Refactor (v2.1.0)
+- **Modular Structure (SRP):** Complete refactoring of the monolithic codebase into a scalable class-based architecture.
+  - `WooSpeed_Repository`: Dedicated Layer for Raw SQL & Database Interactions.
+  - `WooSpeed_Seeder`: Isolated logic for dummy data generation (Products/Orders).
+  - `WooSpeed_API`: Clean separation for AJAX endpoints handling.
+  - `WooSpeed_Admin`: Controller for UI rendering, asset enqueueing, and Hooks.
+- **View Separation:** HTML views extracted to `admin/partials/` for better readability.
+- **Asset Management:** CSS and JS moved to `assets/` and properly enqueued/localized.
+- **Lightweight Bootstrapper:** Reduced root file to ~30 lines for clean initialization.
+
 ## 🚀 Installation
 
 1. Clone this repository into your `wp-content/plugins/` directory:
@@ -86,14 +96,23 @@ This plugin respects your database. Upon deletion:
   - `wp_wc_speed_order_items`
 - No residual data is left behind.
 
-## 📂 File Structure
+## 📂 File Structure (v2.1.0)
 
 ```
 woospeed-analytics/
-├── woospeed-analytics.php  # Main Plugin Core (Singleton, CQRS, UI)
-├── uninstall.php           # Clean Uninstall Protocol (Drop Table)
-├── README.md               # Documentation
-└── .gitignore              # Git ignore rules
+├── assets/                     # Static Assets (CSS/JS)
+│   ├── css/
+│   └── js/
+├── includes/                   # Core Business Logic
+│   ├── class-ws-repository.php # DB Layer
+│   ├── class-ws-seeder.php     # Data Generation
+│   └── class-ws-api.php        # AJAX Handler
+├── admin/                      # Admin UI Layer
+│   ├── class-ws-admin.php      # Main Controller
+│   └── partials/               # HTML Views
+├── languages/                  # i18n
+├── uninstall.php               # Clean Uninstall Protocol
+└── woospeed-analytics.php      # Bootstrapper
 ```
 
 ## ⚠️ Disclaimer
