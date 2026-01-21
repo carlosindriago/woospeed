@@ -389,21 +389,75 @@ class WooSpeed_Analytics
         }
     }
 
-    // 🚀 QUERY ENGINE
+    // 🚀 QUERY ENGINE - Dashboard API Unificada
     public function get_chart_data()
     {
         if (!current_user_can('manage_woocommerce'))
             wp_send_json_error('Unauthorized');
 
         global $wpdb;
-        $results = $wpdb->get_results(
+
+        // 📅 Filtro de Fechas Dinámico
+        $days = isset($_GET['days']) ? intval($_GET['days']) : 30;
+        $start_date = date('Y-m-d', strtotime("-$days days"));
+        $end_date = date('Y-m-d');
+
+        // 📊 KPIs - Métricas ejecutivas en una sola query
+        $kpis = $wpdb->get_row($wpdb->prepare(
+            "SELECT 
+                COALESCE(SUM(order_total), 0) as revenue,
+                COUNT(id) as orders,
+                COALESCE(AVG(order_total), 0) as aov,
+                COALESCE(MAX(order_total), 0) as max_order
+             FROM $this->table_name 
+             WHERE report_date BETWEEN %s AND %s",
+            $start_date,
+            $end_date
+        ));
+
+        // 📈 Datos del Gráfico (Tendencia diaria)
+        $chart = $wpdb->get_results($wpdb->prepare(
             "SELECT report_date, SUM(order_total) as total_sales 
              FROM $this->table_name 
-             WHERE report_date >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+             WHERE report_date BETWEEN %s AND %s
              GROUP BY report_date 
-             ORDER BY report_date ASC"
-        );
-        wp_send_json_success($results);
+             ORDER BY report_date ASC",
+            $start_date,
+            $end_date
+        ));
+
+        // 🏆 Top Products Leaderboard
+        $leaderboard = $wpdb->get_results($wpdb->prepare(
+            "SELECT 
+                product_name,
+                product_id,
+                SUM(quantity) as total_sold,
+                SUM(line_total) as total_revenue
+             FROM $this->items_table_name 
+             WHERE report_date BETWEEN %s AND %s
+             GROUP BY product_id, product_name
+             ORDER BY total_sold DESC
+             LIMIT 5",
+            $start_date,
+            $end_date
+        ));
+
+        // 🎁 Respuesta Compuesta
+        wp_send_json_success([
+            'kpis' => [
+                'revenue' => floatval($kpis->revenue),
+                'orders' => intval($kpis->orders),
+                'aov' => round(floatval($kpis->aov), 2),
+                'max_order' => floatval($kpis->max_order)
+            ],
+            'chart' => $chart,
+            'leaderboard' => $leaderboard,
+            'period' => [
+                'start' => $start_date,
+                'end' => $end_date,
+                'days' => $days
+            ]
+        ]);
     }
 
     public function enqueue_assets($hook)
