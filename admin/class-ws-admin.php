@@ -99,7 +99,20 @@ class WooSpeed_Admin
                     'sold' => __('sold', 'woospeed-analytics'),
                     'load_time' => __('Load Time', 'woospeed-analytics'),
                     'no_data' => __('No data yet', 'woospeed-analytics'),
-                    'revenue' => __('Revenue ($)', 'woospeed-analytics')
+                    'revenue' => __('Revenue ($)', 'woospeed-analytics'),
+                    'presets' => [
+                        'today' => __('Today', 'woospeed-analytics'),
+                        'yesterday' => __('Yesterday', 'woospeed-analytics'),
+                        'week_to_date' => __('Week to date', 'woospeed-analytics'),
+                        'last_week' => __('Last week', 'woospeed-analytics'),
+                        'month_to_date' => __('Month to date', 'woospeed-analytics'),
+                        'last_month' => __('Last month', 'woospeed-analytics'),
+                        'quarter_to_date' => __('Quarter to date', 'woospeed-analytics'),
+                        'last_quarter' => __('Last quarter', 'woospeed-analytics'),
+                        'year_to_date' => __('Year to date', 'woospeed-analytics'),
+                        'last_year' => __('Last year', 'woospeed-analytics'),
+                        'custom' => __('Custom', 'woospeed-analytics')
+                    ]
                 ]
             ]);
         }

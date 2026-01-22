@@ -36,9 +36,20 @@ class WooSpeed_API
             wp_send_json_error('Unauthorized');
         }
 
-        $days = isset($_GET['days']) ? intval($_GET['days']) : 30;
-        $start_date = date('Y-m-d', strtotime("-$days days"));
-        $end_date = date('Y-m-d');
+        // Accept either start_date/end_date OR days for backward compatibility
+        if (isset($_GET['start_date']) && isset($_GET['end_date'])) {
+            $start_date = sanitize_text_field($_GET['start_date']);
+            $end_date = sanitize_text_field($_GET['end_date']);
+        } else {
+            $days = isset($_GET['days']) ? intval($_GET['days']) : 30;
+            $start_date = date('Y-m-d', strtotime("-$days days"));
+            $end_date = date('Y-m-d');
+        }
+
+        // Validate date format (YYYY-MM-DD)
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $start_date) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $end_date)) {
+            wp_send_json_error('Invalid date format');
+        }
 
         // Fetch Data from Repository
         $kpis = $this->repository->get_kpis($start_date, $end_date);
@@ -57,8 +68,7 @@ class WooSpeed_API
             'leaderboard' => $leaderboard,
             'period' => [
                 'start' => $start_date,
-                'end' => $end_date,
-                'days' => $days
+                'end' => $end_date
             ]
         ]);
     }

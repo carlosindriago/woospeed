@@ -3,20 +3,91 @@
         <h1>
             <?php _e('Performance Overview', 'woospeed-analytics'); ?>
         </h1>
-        <select id="ws-date-range" class="ws-date-select">
-            <option value="7">
-                <?php _e('Last 7 Days', 'woospeed-analytics'); ?>
-            </option>
-            <option value="30" selected>
-                <?php _e('Last 30 Days', 'woospeed-analytics'); ?>
-            </option>
-            <option value="90">
-                <?php _e('Last Quarter', 'woospeed-analytics'); ?>
-            </option>
-            <option value="365">
-                <?php _e('This Year', 'woospeed-analytics'); ?>
-            </option>
-        </select>
+
+        <!-- Advanced Date Range Picker -->
+        <div class="ws-date-picker">
+            <button type="button" id="ws-date-trigger" class="ws-date-trigger">
+                <span class="ws-date-label"
+                    id="ws-date-label"><?php _e('Month to date', 'woospeed-analytics'); ?></span>
+                <span class="ws-date-range" id="ws-date-range-text"></span>
+                <span class="ws-date-arrow">▼</span>
+            </button>
+
+            <div class="ws-date-dropdown" id="ws-date-dropdown">
+                <div class="ws-date-dropdown-header">
+                    <?php _e('Select a date range', 'woospeed-analytics'); ?>
+                </div>
+
+                <!-- Tabs -->
+                <div class="ws-date-tabs">
+                    <button type="button" class="ws-date-tab active"
+                        data-tab="presets"><?php _e('Presets', 'woospeed-analytics'); ?></button>
+                    <button type="button" class="ws-date-tab"
+                        data-tab="custom"><?php _e('Custom', 'woospeed-analytics'); ?></button>
+                </div>
+
+                <!-- Presets Panel -->
+                <div class="ws-date-panel" id="ws-panel-presets">
+                    <div class="ws-presets-grid">
+                        <button type="button" class="ws-preset-btn"
+                            data-preset="today"><?php _e('Today', 'woospeed-analytics'); ?></button>
+                        <button type="button" class="ws-preset-btn"
+                            data-preset="yesterday"><?php _e('Yesterday', 'woospeed-analytics'); ?></button>
+                        <button type="button" class="ws-preset-btn"
+                            data-preset="week_to_date"><?php _e('Week to date', 'woospeed-analytics'); ?></button>
+                        <button type="button" class="ws-preset-btn"
+                            data-preset="last_week"><?php _e('Last week', 'woospeed-analytics'); ?></button>
+                        <button type="button" class="ws-preset-btn active"
+                            data-preset="month_to_date"><?php _e('Month to date', 'woospeed-analytics'); ?></button>
+                        <button type="button" class="ws-preset-btn"
+                            data-preset="last_month"><?php _e('Last month', 'woospeed-analytics'); ?></button>
+                        <button type="button" class="ws-preset-btn"
+                            data-preset="quarter_to_date"><?php _e('Quarter to date', 'woospeed-analytics'); ?></button>
+                        <button type="button" class="ws-preset-btn"
+                            data-preset="last_quarter"><?php _e('Last quarter', 'woospeed-analytics'); ?></button>
+                        <button type="button" class="ws-preset-btn"
+                            data-preset="year_to_date"><?php _e('Year to date', 'woospeed-analytics'); ?></button>
+                        <button type="button" class="ws-preset-btn"
+                            data-preset="last_year"><?php _e('Last year', 'woospeed-analytics'); ?></button>
+                    </div>
+                </div>
+
+                <!-- Custom Panel -->
+                <div class="ws-date-panel" id="ws-panel-custom" style="display:none;">
+                    <div class="ws-custom-dates">
+                        <div class="ws-custom-field">
+                            <label><?php _e('Start date', 'woospeed-analytics'); ?></label>
+                            <input type="date" id="ws-custom-start" class="ws-custom-input">
+                        </div>
+                        <div class="ws-custom-field">
+                            <label><?php _e('End date', 'woospeed-analytics'); ?></label>
+                            <input type="date" id="ws-custom-end" class="ws-custom-input">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Compare Section -->
+                <div class="ws-compare-section">
+                    <div class="ws-compare-header"><?php _e('Compare to', 'woospeed-analytics'); ?></div>
+                    <div class="ws-compare-options">
+                        <label class="ws-compare-option">
+                            <input type="radio" name="ws-compare" value="previous_period" checked>
+                            <span><?php _e('Previous period', 'woospeed-analytics'); ?></span>
+                        </label>
+                        <label class="ws-compare-option">
+                            <input type="radio" name="ws-compare" value="previous_year">
+                            <span><?php _e('Previous year', 'woospeed-analytics'); ?></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Update Button -->
+                <div class="ws-date-actions">
+                    <button type="button" id="ws-date-update"
+                        class="ws-btn-primary"><?php _e('Update', 'woospeed-analytics'); ?></button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="ws-kpi-grid">
