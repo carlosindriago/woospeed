@@ -94,6 +94,7 @@ class WooSpeed_Admin
         if (strpos($hook, 'woospeed-dashboard') !== false) {
             wp_enqueue_script('woospeed-dashboard', WS_PLUGIN_URL . 'assets/js/admin-dashboard.js', ['jquery', 'chartjs'], WS_VERSION, true);
             wp_localize_script('woospeed-dashboard', 'woospeed_dashboard_vars', [
+                'nonce' => wp_create_nonce('woospeed_dashboard_nonce'),
                 'i18n' => [
                     'sold' => __('sold', 'woospeed-analytics'),
                     'load_time' => __('Load Time', 'woospeed-analytics'),
@@ -198,6 +199,11 @@ class WooSpeed_Admin
     {
         if (!isset($_GET['page']) || !isset($_GET['seed_action']) || !current_user_can('manage_options'))
             return;
+
+        // CSRF Protection
+        if (!isset($_GET['_wpnonce']) || !wp_verify_nonce($_GET['_wpnonce'], 'woospeed_seed_action')) {
+            wp_die(__('Security check failed', 'woospeed-analytics'));
+        }
 
         $action = $_GET['seed_action'];
         $count = 0;
