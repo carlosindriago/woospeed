@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function () {
             data: {
                 labels: data.map(d => d.report_date),
                 datasets: [{
-                    label: 'Ingresos ($)',
+                    label: woospeed_dashboard_vars.i18n.revenue,
                     data: data.map(d => parseFloat(d.total_sales)),
                     borderColor: '#6366f1',
                     backgroundColor: 'rgba(99, 102, 241, 0.1)',
@@ -45,14 +45,14 @@ document.addEventListener('DOMContentLoaded', function () {
     function renderLeaderboard(items) {
         const container = document.getElementById('leaderboard-container');
         if (!items || items.length === 0) {
-            container.innerHTML = '<div class="ws-loading">Sin datos aún</div>';
+            container.innerHTML = `<div class="ws-loading">${woospeed_dashboard_vars.i18n.no_data}</div>`;
             return;
         }
         container.innerHTML = items.map((item, i) => `
             <div class="ws-leaderboard-item">
                 <span class="ws-leaderboard-rank ${i === 0 ? 'gold' : ''}">${i + 1}</span>
                 <span class="ws-leaderboard-name">${item.product_name}</span>
-                <span class="ws-leaderboard-sold">${item.total_sold} vendidos</span>
+                <span class="ws-leaderboard-sold">${item.total_sold} ${woospeed_dashboard_vars.i18n.sold}</span>
             </div>
         `).join('');
     }
@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Query Time
                 const elapsed = ((performance.now() - startTime) / 1000).toFixed(3);
                 const timeEl = document.getElementById('ws-query-time');
-                if (timeEl) timeEl.textContent = 'Tiempo de carga: ' + elapsed + 's';
+                if (timeEl) timeEl.textContent = woospeed_dashboard_vars.i18n.load_time + ': ' + elapsed + 's';
             })
             .catch(err => console.error('Dashboard error:', err));
     }

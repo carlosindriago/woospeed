@@ -81,6 +81,7 @@ class WooSpeed_API
         // Generate Orders
         $count = $this->seeder->seed_orders($batch_size);
 
-        wp_send_json_success(['count' => $count, 'message' => "Batch de $count órdenes completado."]);
+        $message = sprintf(__('Batch of %d orders completed.', 'woospeed-analytics'), $count);
+        wp_send_json_success(['count' => $count, 'message' => $message]);
     }
 }
