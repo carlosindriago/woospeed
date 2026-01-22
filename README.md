@@ -55,6 +55,10 @@ Instead of using heavy abstraction layers (ORM), pure prepared SQL queries (`$wp
 - **View Separation:** HTML views extracted to `admin/partials/` for better readability.
 - **Asset Management:** CSS and JS moved to `assets/` and properly enqueued/localized.
 - **Lightweight Bootstrapper:** Reduced root file to ~30 lines for clean initialization.
+- **Internationalization (i18n):** Full multi-language support.
+  - Source code in **English**.
+  - Includes **Spanish (es_ES)** translation out-of-the-box.
+  - Uses `wp_localize_script` for seamless JS translations.
 
 ## 🚀 Installation
 

@@ -41,8 +41,8 @@ class WooSpeed_Admin
     public function add_admin_menu()
     {
         add_menu_page(
-            'WooSpeed Analytics',
-            'Speed Analytics',
+            __('WooSpeed Analytics', 'woospeed-analytics'),
+            __('Speed Analytics', 'woospeed-analytics'),
             'manage_woocommerce',
             'woospeed-dashboard',
             [$this, 'render_dashboard_page'],
@@ -52,8 +52,8 @@ class WooSpeed_Admin
 
         add_submenu_page(
             'woospeed-dashboard',
-            'Dashboard',
-            'Dashboard',
+            __('Dashboard', 'woospeed-analytics'),
+            __('Dashboard', 'woospeed-analytics'),
             'manage_woocommerce',
             'woospeed-dashboard',
             [$this, 'render_dashboard_page']
@@ -61,8 +61,8 @@ class WooSpeed_Admin
 
         add_submenu_page(
             'woospeed-dashboard',
-            'Generador de Datos',
-            'Generador de Datos',
+            __('Data Generator', 'woospeed-analytics'),
+            __('Data Generator', 'woospeed-analytics'),
             'manage_woocommerce',
             'woospeed-generator',
             [$this, 'render_generator_page']
@@ -93,6 +93,14 @@ class WooSpeed_Admin
         // Dashboard Page
         if (strpos($hook, 'woospeed-dashboard') !== false) {
             wp_enqueue_script('woospeed-dashboard', WS_PLUGIN_URL . 'assets/js/admin-dashboard.js', ['jquery', 'chartjs'], WS_VERSION, true);
+            wp_localize_script('woospeed-dashboard', 'woospeed_dashboard_vars', [
+                'i18n' => [
+                    'sold' => __('sold', 'woospeed-analytics'),
+                    'load_time' => __('Load Time', 'woospeed-analytics'),
+                    'no_data' => __('No data yet', 'woospeed-analytics'),
+                    'revenue' => __('Revenue ($)', 'woospeed-analytics')
+                ]
+            ]);
         }
 
         // Generator Page
@@ -101,7 +109,13 @@ class WooSpeed_Admin
 
             // Localize Nonce
             wp_localize_script('woospeed-generator', 'woospeed_vars', [
-                'nonce' => wp_create_nonce('woospeed_seed_nonce')
+                'nonce' => wp_create_nonce('woospeed_seed_nonce'),
+                'i18n' => [
+                    'confirm_batch' => __('This will generate 5,000 real orders. Continue?', 'woospeed-analytics'),
+                    'complete_batch' => __('✅ Process Complete! 5,000 Orders Generated.', 'woospeed-analytics'),
+                    'error_network' => __('Network error. Try again.', 'woospeed-analytics'),
+                    'error_process' => __('Error in process: ', 'woospeed-analytics')
+                ]
             ]);
         }
     }

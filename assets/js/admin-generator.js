@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let processed = 0;
 
     btn.addEventListener('click', function () {
-        if (!confirm('Esto generará 5,000 pedidos reales. ¿Continuar?')) return;
+        if (!confirm(woospeed_vars.i18n.confirm_batch)) return;
 
         btn.disabled = true;
         progressContainer.style.display = 'block';
@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function processBatch() {
         if (processed >= TOTAL_ORDERS) {
-            alert('✅ ¡Proceso Terminado! 5,000 Pedidos Generados.');
+            alert(woospeed_vars.i18n.complete_batch);
             window.location.reload();
             return;
         }
@@ -57,12 +57,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     // Recursion
                     processBatch();
                 } else {
-                    alert('Error en el proceso: ' + (response.data && response.data.message ? response.data.message : 'Unknown error'));
+                    alert(woospeed_vars.i18n.error_process + (response.data && response.data.message ? response.data.message : 'Unknown error'));
                     btn.disabled = false;
                 }
             })
             .catch(err => {
-                alert('Error de red. Intenta de nuevo.');
+                alert(woospeed_vars.i18n.error_network);
                 btn.disabled = false;
             });
     }

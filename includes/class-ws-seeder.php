@@ -29,10 +29,10 @@ class WooSpeed_Seeder
         $count = 0;
         for ($i = 0; $i < $limit; $i++) {
             $product = new WC_Product_Simple();
-            $product->set_name("Producto Demo Speed #" . rand(1000, 9999));
+            $product->set_name(sprintf(__("Speed Demo Product #%d", 'woospeed-analytics'), rand(1000, 9999)));
             $product->set_regular_price(rand(10, 100));
-            $product->set_description("Descripción generada automáticamente para pruebas de carga.");
-            $product->set_short_description("Producto de prueba.");
+            $product->set_description(__("Automatically generated description for load testing.", 'woospeed-analytics'));
+            $product->set_short_description(__("Test product.", 'woospeed-analytics'));
             $product->set_status("publish");
             $product->add_meta_data('_woospeed_dummy', 'yes', true);
             $product->save();
@@ -86,7 +86,7 @@ class WooSpeed_Seeder
             $order->add_meta_data('_woospeed_dummy', 'yes', true);
 
             // This triggers the 'completed' hook which syncs to our DB via the main plugin class
-            $order->update_status('completed', 'Orden de prueba generada automáticamente.');
+            $order->update_status('completed', __('Automatically generated test order.', 'woospeed-analytics'));
             $count++;
         }
 

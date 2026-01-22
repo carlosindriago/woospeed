@@ -25,6 +25,9 @@ require_once WS_PLUGIN_DIR . 'admin/class-ws-admin.php';
 // 3. Initialize Plugin
 function run_woospeed_analytics()
 {
+    // Load Text Domain
+    load_plugin_textdomain('woospeed-analytics', false, dirname(plugin_basename(__FILE__)) . '/languages');
+
     // Initialize Admin UI
     $plugin = new WooSpeed_Admin();
     $plugin->run();
