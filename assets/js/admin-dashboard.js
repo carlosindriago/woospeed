@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const startTime = performance.now();
 
         // ajaxurl is defined by WordPress in Admin
-        fetch(ajaxurl + '?action=woospeed_get_data&days=' + currentDays)
+        fetch(ajaxurl + '?action=woospeed_get_data&days=' + currentDays + '&security=' + woospeed_dashboard_vars.nonce)
             .then(res => res.json())
             .then(response => {
                 if (!response.success) return;

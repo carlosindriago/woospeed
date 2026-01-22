@@ -30,6 +30,8 @@ class WooSpeed_API
      */
     public function handle_get_data()
     {
+        check_ajax_referer('woospeed_dashboard_nonce', 'security');
+
         if (!current_user_can('manage_woocommerce')) {
             wp_send_json_error('Unauthorized');
         }
