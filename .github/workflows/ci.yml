@@ -1,0 +1,144 @@
+name: CI - Static Analysis & Tests
+
+on:
+    push:
+        branches: [ main, develop ]
+    pull_request:
+        branches: [ main, develop ]
+
+jobs:
+    phpstan:
+        name: PHPStan Static Analysis (Level 9)
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: '8.3'
+                  extensions: mbstring, mysql
+                  coverage: none
+                  tools: composer:v2
+
+            - name: Get Composer Cache Directory
+              id: composer-cache
+              run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+            - name: Cache Composer dependencies
+              uses: actions/cache@v3
+              with:
+                  path: ${{ steps.composer-cache.outputs.dir }}
+                  key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+                  restore-keys: |
+                      ${{ runner.os }}-composer-
+
+            - name: Install dependencies
+              run: composer install --prefer-dist --no-progress --no-interaction
+
+            - name: Run PHPStan
+              run: composer phpstan
+
+            - name: Upload PHPStan results
+              if: always()
+              uses: actions/upload-artifact@v3
+              with:
+                  name: phpstan-results
+                  path: build/phpstan/
+
+    phpunit:
+        name: PHPUnit Tests
+        runs-on: ubuntu-latest
+
+        services:
+            mysql:
+                image: mysql:8.0
+                env:
+                    MYSQL_ROOT_PASSWORD: wordpress
+                    MYSQL_DATABASE: wordpress_test
+                ports:
+                    - 3306:3306
+                options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: '8.3'
+                  extensions: mbstring, mysqli
+                  coverage: xdebug
+                  tools: composer:v2
+
+            - name: Get Composer Cache Directory
+              id: composer-cache
+              run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+            - name: Cache Composer dependencies
+              uses: actions/cache@v3
+              with:
+                  path: ${{ steps.composer-cache.outputs.dir }}
+                  key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+                  restore-keys: |
+                      ${{ runner.os }}-composer-
+
+            - name: Install dependencies
+              run: composer install --prefer-dist --no-progress --no-interaction
+
+            - name: Install WordPress test suite
+              run: bash tests/install-wp-tests.sh wordpress_test root wordpress 127.0.0.1 latest
+
+            - name: Run PHPUnit
+              run: composer test
+
+            - name: Upload coverage reports
+              if: always()
+              uses: actions/upload-artifact@v3
+              with:
+                  name: coverage-report
+                  path: coverage/html/
+
+    code-sniffer:
+        name: PHP_CodeSniffer (WordPress Coding Standards)
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: '8.3'
+                  extensions: mbstring
+                  tools: composer:v2
+
+            - name: Install dependencies
+              run: composer install --prefer-dist --no-progress --no-interaction
+
+            - name: Run PHPCS
+              run: composer cs
+
+    compatibility:
+        name: PHP Compatibility Check
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: '8.3'
+                  tools: composer:v2
+
+            - name: Install dependencies
+              run: composer install --prefer-dist --no-progress --no-interaction
+
+            - name: Run PHPCompatibilityWP
+              run: vendor/bin/phpcs --standard=PHPCompatibilityWP --runtime-set testVersion 8.1
