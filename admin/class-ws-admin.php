@@ -1,8 +1,11 @@
 <?php
 /**
  * WooSpeed Admin Class
- * 
+ *
  * Handles all admin-facing functionality (Menus, Enqueues, Views).
+ *
+ * @package WooSpeed_Analytics
+ * @since 3.0.0
  */
 
 if (!defined('ABSPATH')) {
@@ -11,17 +14,36 @@ if (!defined('ABSPATH')) {
 
 class WooSpeed_Admin
 {
+    /**
+     * @var WooSpeed_Repository Repository instance
+     */
+    private WooSpeed_Repository $repository;
 
-    private $repository;
-    private $seeder;
+    /**
+     * @var WooSpeed_Seeder Seeder instance
+     */
+    private WooSpeed_Seeder $seeder;
 
-    public function __construct()
-    {
-        $this->repository = new WooSpeed_Repository();
-        $this->seeder = new WooSpeed_Seeder();
+    /**
+     * Constructor
+     *
+     * @param WooSpeed_Repository|null $repository Optional repository instance
+     * @param WooSpeed_Seeder|null $seeder Optional seeder instance
+     */
+    public function __construct(
+        ?WooSpeed_Repository $repository = null,
+        ?WooSpeed_Seeder $seeder = null
+    ) {
+        $this->repository = $repository ?? new WooSpeed_Repository();
+        $this->seeder = $seeder ?? new WooSpeed_Seeder($this->repository);
     }
 
-    public function run()
+    /**
+     * Initialize all admin hooks
+     *
+     * @return void
+     */
+    public function run(): void
     {
         // Admin Hooks
         add_action('admin_menu', [$this, 'add_admin_menu']);
@@ -38,8 +60,12 @@ class WooSpeed_Admin
 
     /**
      * Show Migration Notice
+     *
+     * Displays admin notice when migration is needed or in progress.
+     *
+     * @return void
      */
-    public function show_migration_notice()
+    public function show_migration_notice(): void
     {
         $migration = get_option('woospeed_migration_status', []);
         $status = $migration['status'] ?? 'not_needed';
@@ -109,8 +135,10 @@ class WooSpeed_Admin
 
     /**
      * Register Admin Pages
+     *
+     * @return void
      */
-    public function add_admin_menu()
+    public function add_admin_menu(): void
     {
         add_menu_page(
             __('WooSpeed Analytics', 'woospeed-analytics'),
@@ -162,38 +190,71 @@ class WooSpeed_Admin
     }
 
     /**
-     * Render Migration Page
+     * Render Dashboard Page
+     *
+     * @return void
      */
-    public function render_migration_page()
+    public function render_dashboard_page(): void
     {
-        include WS_PLUGIN_DIR . 'admin/partials/ws-migration-view.php';
+        include WS_PLUGIN_DIR . 'admin/partials/ws-dashboard-view.php';
     }
 
     /**
      * Render Settings Page
+     *
+     * @return void
      */
-    public function render_settings_page()
+    public function render_settings_page(): void
     {
         include WS_PLUGIN_DIR . 'admin/partials/ws-settings-view.php';
     }
 
     /**
-     * Enqueue Styles
+     * Render Migration Page
+     *
+     * @return void
      */
-    public function enqueue_styles($hook)
+    public function render_migration_page(): void
     {
-        if (strpos($hook, 'woospeed') === false)
+        include WS_PLUGIN_DIR . 'admin/partials/ws-migration-view.php';
+    }
+
+    /**
+     * Render Generator Page
+     *
+     * @return void
+     */
+    public function render_generator_page(): void
+    {
+        include WS_PLUGIN_DIR . 'admin/partials/ws-generator-view.php';
+    }
+
+    /**
+     * Enqueue Styles
+     *
+     * @param string $hook Current admin page hook
+     * @return void
+     */
+    public function enqueue_styles(string $hook): void
+    {
+        if (strpos($hook, 'woospeed') === false) {
             return;
+        }
+
         wp_enqueue_style('woospeed-admin', WS_PLUGIN_URL . 'assets/css/admin-style.css', [], WS_VERSION);
     }
 
     /**
      * Enqueue Scripts
+     *
+     * @param string $hook Current admin page hook
+     * @return void
      */
-    public function enqueue_scripts($hook)
+    public function enqueue_scripts(string $hook): void
     {
-        if (strpos($hook, 'woospeed') === false)
+        if (strpos($hook, 'woospeed') === false) {
             return;
+        }
 
         // Common Dependencies
         wp_enqueue_script('chartjs', 'https://cdn.jsdelivr.net/npm/chart.js', [], null, true);
@@ -201,6 +262,7 @@ class WooSpeed_Admin
         // Dashboard Page
         if (strpos($hook, 'woospeed-dashboard') !== false) {
             wp_enqueue_script('woospeed-dashboard', WS_PLUGIN_URL . 'assets/js/admin-dashboard.js', ['jquery', 'chartjs'], WS_VERSION, true);
+
             wp_localize_script('woospeed-dashboard', 'woospeed_dashboard_vars', [
                 'nonce' => wp_create_nonce('woospeed_dashboard_nonce'),
                 'i18n' => [
@@ -243,29 +305,20 @@ class WooSpeed_Admin
     }
 
     /**
-     * Render Dashboard
-     */
-    public function render_dashboard_page()
-    {
-        include WS_PLUGIN_DIR . 'admin/partials/ws-dashboard-view.php';
-    }
-
-    /**
-     * Render Generator
-     */
-    public function render_generator_page()
-    {
-        include WS_PLUGIN_DIR . 'admin/partials/ws-generator-view.php';
-    }
-
-    /**
      * Sync Order on Completion
+     *
+     * Copies order data to the flat table structure when an order is completed.
+     *
+     * @param int $order_id WooCommerce order ID
+     * @return void
      */
-    public function sync_order($order_id)
+    public function sync_order(int $order_id): void
     {
         $order = wc_get_order($order_id);
-        if (!$order)
+
+        if (!$order) {
             return;
+        }
 
         $total = $order->get_total();
         $date = $order->get_date_created()->date('Y-m-d');
@@ -274,52 +327,53 @@ class WooSpeed_Admin
         $this->repository->save_report($order_id, $total, $date);
 
         // Save Items
-        $items_data = [];
-        foreach ($order->get_items() as $item) {
-            $product = $item->get_product();
-            if (!$product)
-                continue;
-
-            $items_data[] = [
-                'product_id' => $product->get_id(),
-                'product_name' => $item->get_name(),
-                'quantity' => $item->get_quantity(),
-                'line_total' => $item->get_total(),
-            ];
-        }
+        $items_data = $this->extract_order_items($order);
         $this->repository->save_items($order_id, $items_data, $date);
     }
 
     /**
      * Handle Order Status Change (Cleanup if cancelled)
+     *
+     * @param int $order_id Order ID
+     * @param string $from Status from
+     * @param string $to Status to
+     * @param WC_Order $order Order object
+     * @return void
      */
-    public function handle_status_change($order_id, $from, $to, $order)
+    public function handle_status_change(int $order_id, string $from, string $to, WC_Order $order): void
     {
-        if (in_array($to, ['cancelled', 'refunded', 'failed', 'trash'])) {
+        $remove_statuses = ['cancelled', 'refunded', 'failed', 'trash'];
+        $add_statuses = ['completed', 'processing'];
+
+        if (in_array($to, $remove_statuses, true)) {
             $this->repository->delete_order_data($order_id);
-        } elseif (in_array($to, ['completed', 'processing'])) {
+        } elseif (in_array($to, $add_statuses, true)) {
             $this->sync_order($order_id);
         }
     }
 
     /**
      * Ensure tables exist
+     *
+     * @return void
      */
-    public function maybe_upgrade_tables()
+    public function maybe_upgrade_tables(): void
     {
         // Simple check: if table doesn't exist, create it.
-        // For performance, we could check DB option version.
         // Calling create_tables is safe due to dbDelta.
         $this->repository->create_tables();
     }
 
     /**
      * Handle Seed Actions (GET requests)
+     *
+     * @return void
      */
-    public function handle_seed_actions()
+    public function handle_seed_actions(): void
     {
-        if (!isset($_GET['page']) || !isset($_GET['seed_action']) || !current_user_can('manage_options'))
+        if (!isset($_GET['page']) || !isset($_GET['seed_action']) || !current_user_can('manage_options')) {
             return;
+        }
 
         // CSRF Protection
         if (!isset($_GET['_wpnonce']) || !wp_verify_nonce($_GET['_wpnonce'], 'woospeed_seed_action')) {
@@ -335,15 +389,12 @@ class WooSpeed_Admin
         } elseif ($action === 'orders_50') {
             $count = $this->seeder->seed_orders(50);
         } elseif ($action === 'migrate_items') {
-            $count = $this->migrate_existing_items(); // Need to implement migration logic
+            $count = $this->migrate_existing_items();
             wp_redirect(admin_url("admin.php?page=woospeed-generator&migrated=true&count=$count"));
             exit;
         } elseif ($action === 'clear_all') {
-            $count = $this->repository->clean_dummy_tables(); // Clean DB
-            // Need to clean posts too? Repository handles DB only.
-            // Seeder should handle clearing dummy posts?
-            // Original code had it mixed. Let's put logic in Seeder for posts and Repository for DB.
-            $count += $this->clear_dummy_posts(); // Helper method
+            $count = $this->repository->clean_dummy_tables();
+            $count += $this->clear_dummy_posts();
             wp_redirect(admin_url("admin.php?page=woospeed-generator&cleared=true&count=$count"));
             exit;
         }
@@ -353,23 +404,65 @@ class WooSpeed_Admin
     }
 
     /**
-     * Helper: Clear dummy posts (could be in Seeder)
+     * Extract order items from a WooCommerce order
+     *
+     * Helper method to avoid code duplication (DRY principle).
+     *
+     * @param WC_Order $order The order object
+     * @return array Array of item data
      */
-    private function clear_dummy_posts()
+    private function extract_order_items(WC_Order $order): array
     {
-        // Logic from original clear_dummy_data (WP_Query parts)
-        // ... (Implement logic to delete products/orders with specific meta)
+        $items_data = [];
+
+        foreach ($order->get_items() as $item) {
+            $product = $item->get_product();
+
+            if (!$product) {
+                continue;
+            }
+
+            $items_data[] = [
+                'product_id' => $product->get_id(),
+                'product_name' => $item->get_name(),
+                'quantity' => $item->get_quantity(),
+                'line_total' => $item->get_total(),
+            ];
+        }
+
+        return $items_data;
+    }
+
+    /**
+     * Clear dummy posts (products and orders)
+     *
+     * @return int Number of posts deleted
+     */
+    private function clear_dummy_posts(): int
+    {
         $count = 0;
 
         // Products
-        $products = wc_get_products(['limit' => -1, 'meta_key' => '_woospeed_dummy', 'meta_value' => 'yes', 'return' => 'ids']);
+        $products = wc_get_products([
+            'limit' => -1,
+            'meta_key' => '_woospeed_dummy',
+            'meta_value' => 'yes',
+            'return' => 'ids'
+        ]);
+
         foreach ($products as $pid) {
             wp_delete_post($pid, true);
             $count++;
         }
 
         // Orders
-        $orders = wc_get_orders(['limit' => -1, 'meta_key' => '_woospeed_dummy', 'meta_value' => 'yes', 'return' => 'ids']);
+        $orders = wc_get_orders([
+            'limit' => -1,
+            'meta_key' => '_woospeed_dummy',
+            'meta_value' => 'yes',
+            'return' => 'ids'
+        ]);
+
         foreach ($orders as $oid) {
             wp_delete_post($oid, true);
             $count++;
@@ -379,38 +472,35 @@ class WooSpeed_Admin
     }
 
     /**
-     * Helper: Migrate Items
+     * Migrate existing items for orders that don't have them
+     *
+     * @return int Number of items migrated
      */
-    private function migrate_existing_items()
+    private function migrate_existing_items(): int
     {
         $count = 0;
         $order_ids = $this->repository->get_all_order_ids();
 
         foreach ($order_ids as $order_id) {
-            if ($this->repository->has_items($order_id))
+            // Skip if already has items
+            if ($this->repository->has_items($order_id)) {
                 continue;
+            }
 
             $order = wc_get_order($order_id);
-            if (!$order)
+
+            if (!$order) {
                 continue;
+            }
 
             $date = $order->get_date_created() ? $order->get_date_created()->date('Y-m-d') : date('Y-m-d');
 
-            $items_data = [];
-            foreach ($order->get_items() as $item) {
-                $product = $item->get_product();
-                if (!$product)
-                    continue;
-                $items_data[] = [
-                    'product_id' => $product->get_id(),
-                    'product_name' => $item->get_name(),
-                    'quantity' => $item->get_quantity(),
-                    'line_total' => $item->get_total(),
-                ];
-                $count++;
-            }
+            $items_data = $this->extract_order_items($order);
             $this->repository->save_items($order_id, $items_data, $date);
+
+            $count += count($items_data);
         }
+
         return $count;
     }
 }
