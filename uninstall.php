@@ -2,7 +2,8 @@
 /**
  * Fired when the plugin is uninstalled.
  *
- * @package WooSpeed Analytics
+ * @package WooSpeed_Analytics
+ * @since 3.0.0
  */
 
 // 🛡️ SEGURIDAD PRIMERO:
@@ -14,15 +15,28 @@ if (!defined('WP_UNINSTALL_PLUGIN')) {
 
 global $wpdb;
 
-// Definimos el nombre de las tablas (igual que en el plugin principal)
+// ============================================================
+// DELETE CUSTOM TABLES
+// ============================================================
 $table_name = $wpdb->prefix . 'wc_speed_reports';
 $items_table_name = $wpdb->prefix . 'wc_speed_order_items';
 
-// 🗑️ LA LIMPIEZA:
-// Borramos las tablas completamente.
 // DROP TABLE IF EXISTS evita errores si las tablas ya no existieran.
 $wpdb->query("DROP TABLE IF EXISTS $table_name");
 $wpdb->query("DROP TABLE IF EXISTS $items_table_name");
 
-// (Opcional) Si hubiéramos guardado configuraciones en wp_options, también las borraríamos aquí:
-// delete_option('woospeed_settings');
+// ============================================================
+// DELETE PLUGIN OPTIONS
+// ============================================================
+// Borramos TODAS las opciones que creamos
+delete_option('woospeed_migration_status');
+
+// Nota: Si en el futuro agregas más options con update_option(),
+// agrégalas aquí para una limpieza completa.
+
+// ============================================================
+// LOG CLEANUP (opcional, para debugging)
+// ============================================================
+if (defined('WP_DEBUG') && WP_DEBUG) {
+    error_log('[WooSpeed] Plugin uninstalled - tables and options deleted');
+}
