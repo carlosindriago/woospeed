@@ -12,20 +12,34 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-// 1. Constants
+// ============================================================
+// CONSTANTS
+// ============================================================
 define('WS_VERSION', '3.0.0');
 define('WS_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('WS_PLUGIN_URL', plugin_dir_url(__FILE__));
 
-// 2. Autoload Components
+// ============================================================
+// AUTOLOAD COMPONENTS
+// ============================================================
 require_once WS_PLUGIN_DIR . 'includes/class-ws-repository.php';
 require_once WS_PLUGIN_DIR . 'includes/class-ws-seeder.php';
 require_once WS_PLUGIN_DIR . 'includes/class-ws-api.php';
 require_once WS_PLUGIN_DIR . 'admin/class-ws-admin.php';
 
-// 3. Activation Hook - Check for existing orders
+// ============================================================
+// ACTIVATION HOOK
+// ============================================================
 register_activation_hook(__FILE__, 'woospeed_activate');
-function woospeed_activate()
+
+/**
+ * Plugin activation handler
+ *
+ * Creates custom tables and checks for existing WooCommerce orders.
+ *
+ * @return void
+ */
+function woospeed_activate(): void
 {
     // Create tables
     $repository = new WooSpeed_Repository();
@@ -59,22 +73,37 @@ function woospeed_activate()
     }
 }
 
-// Helper: Count WooCommerce orders
-function woospeed_count_wc_orders()
+/**
+ * Count WooCommerce orders that need migration
+ *
+ * @return int Number of orders
+ */
+function woospeed_count_wc_orders(): int
 {
     if (!function_exists('wc_get_orders')) {
         return 0;
     }
 
-    return count(wc_get_orders([
+    $orders = wc_get_orders([
         'limit' => -1,
         'status' => ['completed', 'processing'],
         'return' => 'ids'
-    ]));
+    ]);
+
+    return count($orders);
 }
 
-// 4. Initialize Plugin
-function run_woospeed_analytics()
+// ============================================================
+// INITIALIZATION
+// ============================================================
+add_action('plugins_loaded', 'run_woospeed_analytics');
+
+/**
+ * Initialize the plugin
+ *
+ * @return void
+ */
+function run_woospeed_analytics(): void
 {
     // Load Text Domain
     load_plugin_textdomain('woospeed-analytics', false, dirname(plugin_basename(__FILE__)) . '/languages');
@@ -86,5 +115,3 @@ function run_woospeed_analytics()
     // Initialize API (AJAX Endpoints)
     new WooSpeed_API();
 }
-add_action('plugins_loaded', 'run_woospeed_analytics');
-
