@@ -75,9 +75,23 @@ class WooSpeed_API
             wp_send_json_error(['message' => 'Invalid date format']);
         }
 
+        // Validate date range (max 1 year)
+        $start_timestamp = strtotime($start_date);
+        $end_timestamp = strtotime($end_date);
+        $days_diff = ($end_timestamp - $start_timestamp) / DAY_IN_SECONDS;
+
+        if ($days_diff < 0 || $days_diff > 365) {
+            wp_send_json_error(['message' => 'Date range must be between 1 day and 1 year']);
+        }
+
         try {
             // Fetch Data from Repository
             $kpis = $this->repository->get_kpis($start_date, $end_date);
+
+            if ($kpis === null) {
+                throw new Exception('Failed to retrieve KPIs');
+            }
+
             $chart = $this->repository->get_chart_data($start_date, $end_date);
             $leaderboard = $this->repository->get_top_products($start_date, $end_date);
 
@@ -107,8 +121,11 @@ class WooSpeed_API
                 ]
             ]);
         } catch (Exception $e) {
-            error_log(sprintf('[WooSpeed] API Error: %s', $e->getMessage()));
-            wp_send_json_error(['message' => 'Failed to fetch dashboard data']);
+            error_log(sprintf('[WooSpeed] API Error in handle_get_data: %s', $e->getMessage()));
+            wp_send_json_error([
+                'message' => 'Failed to fetch dashboard data',
+                'debug' => WP_DEBUG ? $e->getMessage() : null
+            ]);
         }
     }
 
@@ -144,11 +161,18 @@ class WooSpeed_API
             // Generate Orders
             $count = $this->seeder->seed_orders($batch_size);
 
+            if ($count === 0) {
+                throw new Exception('No orders were generated');
+            }
+
             $message = sprintf(__('Batch of %d orders completed.', 'woospeed-analytics'), $count);
             wp_send_json_success(['count' => $count, 'message' => $message]);
         } catch (Exception $e) {
-            error_log(sprintf('[WooSpeed] Seeder Error: %s', $e->getMessage()));
-            wp_send_json_error(['message' => 'Failed to generate orders']);
+            error_log(sprintf('[WooSpeed] Seeder Error in handle_batch_seed: %s', $e->getMessage()));
+            wp_send_json_error([
+                'message' => 'Failed to generate orders',
+                'debug' => WP_DEBUG ? $e->getMessage() : null
+            ]);
         }
     }
 
@@ -176,6 +200,10 @@ class WooSpeed_API
             wp_send_json_error(['message' => 'Batch size must be between 1 and 500']);
         }
 
+        if ($offset < 0) {
+            wp_send_json_error(['message' => 'Invalid offset']);
+        }
+
         // Get current migration status
         $migration = get_option('woospeed_migration_status', []);
 
@@ -196,6 +224,22 @@ class WooSpeed_API
                 'order' => 'ASC'
             ]);
 
+            if (empty($orders)) {
+                // No more orders to migrate
+                $migration = get_option('woospeed_migration_status', []);
+                $migration['status'] = 'completed';
+                $migration['completed_at'] = current_time('mysql');
+                update_option('woospeed_migration_status', $migration);
+
+                wp_send_json_success([
+                    'migrated_count' => $migration['migrated_count'],
+                    'error_count' => $migration['error_count'] ?? 0,
+                    'status' => $migration['status'],
+                    'errors' => []
+                ]);
+                return;
+            }
+
             $migrated = 0;
             $errors = [];
 
@@ -213,17 +257,22 @@ class WooSpeed_API
                     // Extract and Save Items
                     $items_data = $this->extract_order_items($order);
 
+                    if (empty($items_data)) {
+                        error_log(sprintf('[WooSpeed] Warning: No items found for order %d', $order_id));
+                    }
+
                     if (!$this->repository->save_items($order_id, $items_data, $date)) {
                         throw new Exception('Failed to save items');
                     }
 
                     $migrated++;
                 } catch (Exception $e) {
-                    $errors[] = sprintf(
+                    $error_msg = sprintf(
                         __('Order #%d: %s', 'woospeed-analytics'),
                         $order->get_id(),
                         $e->getMessage()
                     );
+                    $errors[] = $error_msg;
                     error_log(sprintf('[WooSpeed] Migration Error for order %d: %s', $order->get_id(), $e->getMessage()));
                 }
             }
@@ -233,7 +282,7 @@ class WooSpeed_API
             $migration['migrated_count'] = $offset + $migrated;
             $migration['error_count'] = ($migration['error_count'] ?? 0) + count($errors);
 
-            // Check if migration is complete
+            // Check if migration might be complete (fewer orders than batch size)
             if (count($orders) < $batch_size) {
                 $migration['status'] = 'completed';
                 $migration['completed_at'] = current_time('mysql');
@@ -253,7 +302,16 @@ class WooSpeed_API
             ]);
         } catch (Exception $e) {
             error_log(sprintf('[WooSpeed] Migration Batch Error: %s', $e->getMessage()));
-            wp_send_json_error(['message' => 'Migration failed']);
+
+            // Update migration status with error
+            $migration = get_option('woospeed_migration_status', []);
+            $migration['status'] = 'error';
+            update_option('woospeed_migration_status', $migration);
+
+            wp_send_json_error([
+                'message' => 'Migration failed',
+                'debug' => WP_DEBUG ? $e->getMessage() : null
+            ]);
         }
     }
 

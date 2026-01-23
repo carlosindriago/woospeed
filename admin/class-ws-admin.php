@@ -308,31 +308,49 @@ class WooSpeed_Admin
      * Sync Order on Completion
      *
      * Copies order data to the flat table structure when an order is completed.
+     * Wrapped in try-catch to prevent order completion failures.
      *
      * @param int $order_id WooCommerce order ID
      * @return void
      */
     public function sync_order(int $order_id): void
     {
-        $order = wc_get_order($order_id);
+        try {
+            $order = wc_get_order($order_id);
 
-        if (!$order) {
-            return;
+            if (!$order) {
+                error_log(sprintf('[WooSpeed] Order %d not found during sync', $order_id));
+                return;
+            }
+
+            $total = $order->get_total();
+            $date = $order->get_date_created()->date('Y-m-d');
+
+            // Save Report
+            $report_saved = $this->repository->save_report($order_id, $total, $date);
+
+            if (!$report_saved) {
+                error_log(sprintf('[WooSpeed] Failed to save report for order %d', $order_id));
+                return;
+            }
+
+            // Save Items
+            $items_data = $this->extract_order_items($order);
+            $items_saved = $this->repository->save_items($order_id, $items_data, $date);
+
+            if (!$items_saved) {
+                error_log(sprintf('[WooSpeed] Failed to save items for order %d', $order_id));
+            }
+        } catch (Exception $e) {
+            error_log(sprintf('[WooSpeed] Error syncing order %d: %s', $order_id, $e->getMessage()));
+            // Don't throw - allow order completion to proceed
         }
-
-        $total = $order->get_total();
-        $date = $order->get_date_created()->date('Y-m-d');
-
-        // Save Report
-        $this->repository->save_report($order_id, $total, $date);
-
-        // Save Items
-        $items_data = $this->extract_order_items($order);
-        $this->repository->save_items($order_id, $items_data, $date);
     }
 
     /**
      * Handle Order Status Change (Cleanup if cancelled)
+     *
+     * Wrapped in try-catch to prevent status change failures.
      *
      * @param int $order_id Order ID
      * @param string $from Status from
@@ -342,13 +360,22 @@ class WooSpeed_Admin
      */
     public function handle_status_change(int $order_id, string $from, string $to, WC_Order $order): void
     {
-        $remove_statuses = ['cancelled', 'refunded', 'failed', 'trash'];
-        $add_statuses = ['completed', 'processing'];
+        try {
+            $remove_statuses = ['cancelled', 'refunded', 'failed', 'trash'];
+            $add_statuses = ['completed', 'processing'];
 
-        if (in_array($to, $remove_statuses, true)) {
-            $this->repository->delete_order_data($order_id);
-        } elseif (in_array($to, $add_statuses, true)) {
-            $this->sync_order($order_id);
+            if (in_array($to, $remove_statuses, true)) {
+                $deleted = $this->repository->delete_order_data($order_id);
+
+                if (!$deleted) {
+                    error_log(sprintf('[WooSpeed] Failed to delete data for order %d', $order_id));
+                }
+            } elseif (in_array($to, $add_statuses, true)) {
+                $this->sync_order($order_id);
+            }
+        } catch (Exception $e) {
+            error_log(sprintf('[WooSpeed] Error handling status change for order %d: %s', $order_id, $e->getMessage()));
+            // Don't throw - allow status change to proceed
         }
     }
 
@@ -384,23 +411,29 @@ class WooSpeed_Admin
         $count = 0;
         set_time_limit(300);
 
-        if ($action === 'products_20') {
-            $count = $this->seeder->seed_products(20);
-        } elseif ($action === 'orders_50') {
-            $count = $this->seeder->seed_orders(50);
-        } elseif ($action === 'migrate_items') {
-            $count = $this->migrate_existing_items();
-            wp_redirect(admin_url("admin.php?page=woospeed-generator&migrated=true&count=$count"));
+        try {
+            if ($action === 'products_20') {
+                $count = $this->seeder->seed_products(20);
+            } elseif ($action === 'orders_50') {
+                $count = $this->seeder->seed_orders(50);
+            } elseif ($action === 'migrate_items') {
+                $count = $this->migrate_existing_items();
+                wp_redirect(admin_url("admin.php?page=woospeed-generator&migrated=true&count=$count"));
+                exit;
+            } elseif ($action === 'clear_all') {
+                $count = $this->repository->clean_dummy_tables();
+                $count += $this->clear_dummy_posts();
+                wp_redirect(admin_url("admin.php?page=woospeed-generator&cleared=true&count=$count"));
+                exit;
+            }
+
+            wp_redirect(admin_url("admin.php?page=woospeed-generator&seeded=true&type=$action&count=$count"));
             exit;
-        } elseif ($action === 'clear_all') {
-            $count = $this->repository->clean_dummy_tables();
-            $count += $this->clear_dummy_posts();
-            wp_redirect(admin_url("admin.php?page=woospeed-generator&cleared=true&count=$count"));
+        } catch (Exception $e) {
+            error_log(sprintf('[WooSpeed] Seed action error (%s): %s', $action, $e->getMessage()));
+            wp_redirect(admin_url('admin.php?page=woospeed-generator&error=true'));
             exit;
         }
-
-        wp_redirect(admin_url("admin.php?page=woospeed-generator&seeded=true&type=$action&count=$count"));
-        exit;
     }
 
     /**
