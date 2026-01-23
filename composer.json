@@ -1,0 +1,69 @@
+{
+    "name": "woospeed/analytics",
+    "description": "High-performance WooCommerce analytics engine with Flat Table architecture",
+    "type": "wordpress-plugin",
+    "keywords": [
+        "wordpress",
+        "woocommerce",
+        "analytics",
+        "performance",
+        "dashboard"
+    ],
+    "license": "GPL-2.0-or-later",
+    "authors": [
+        {
+            "name": "Carlos Indriago",
+            "email": "carlos@example.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=8.1"
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^1.10",
+        "phpstan/extension-installer": "^1.3",
+        "szepeviktor/phpstan-wordpress": "^1.3",
+        "phpunit/phpunit": "^10.5",
+        "yoast/phpunit-polyfills": "^2.0",
+        "squizlabs/php_codesniffer": "^3.8",
+        "wp-coding-standards/wpcs": "^3.0",
+        "phpcompatibility/phpcompatibility-wp": "^2.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "WooSpeed\\Analytics\\": "includes/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "WooSpeed\\Analytics\\Tests\\": "tests/unit/"
+        }
+    },
+    "scripts": {
+        "phpstan": "phpstan analyse --memory-limit=512M",
+        "phpstan-baseline": "phpstan analyse --generate-baseline",
+        "test": "phpunit",
+        "test-coverage": "phpunit --coverage-html coverage/html",
+        "cs": "phpcs --standard=WordPress",
+        "cs-fix": "phpcbf --standard=WordPress",
+        "analyze": [
+            "@phpstan",
+            "@cs"
+        ],
+        "ci": [
+            "@analyze",
+            "@test"
+        ],
+        "install-test-env": "bash tests/install-wp-tests.sh wordpress_test root '' localhost latest"
+    },
+    "config": {
+        "allow-plugins": {
+            "phpstan/extension-installer": true
+        },
+        "optimize-autoloader": true,
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

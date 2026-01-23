@@ -1,0 +1,87 @@
+# PHPStan Configuration for WooSpeed Analytics
+# Senior-level static analysis setup
+
+parameters:
+    # Analysis level - 9 is the maximum strictness
+    level: 9
+
+    # Paths to analyse
+    paths:
+        - woospeed-analytics.php
+        - includes/
+        - admin/
+
+    # Paths to exclude from analysis
+    excludePaths:
+        - tests/
+        - vendor/
+        - languages/
+        - assets/
+
+    # Ignore errors for specific WordPress patterns
+    ignoreErrors:
+        # Allow mixed return types from WordPress functions
+        - '#Mixed return type#'
+
+        # Allow dynamic property access in WordPress
+        - '#Access to an undefined property#'
+
+        # WordPress hooks with unknown parameters
+        - '#Parameter .* of function .* has invalid typehint type mixed#'
+
+    # Check for missing typehints
+    checkMissingIterableValueType: true
+    checkGenericClassInNonGenericObjectType: true
+
+    # Treat PHP deprecations as errors
+    reportDeprecations: true
+
+    # Check for always true/false conditions
+    checkAlwaysTrueCheck: true
+    checkAlwaysTrueInstanceof: true
+
+    # Check for unused parameters
+    checkUnusedParameters: true
+
+    # Universal Object Crates for WordPress
+    universalObjectCratesClasses:
+        - WP_Post
+
+    # Bootstrap files for WordPress/WooCommerce functions
+    bootstrapFiles:
+        - %currentWorkingDirectory%/phpstan-bootstrap.php
+
+    # Stubs for WordPress functions
+    scanFiles:
+        - %currentWorkingDirectory%/phpstan-stubs.php
+
+    # Custom rules for WordPress coding standards
+    customRulesetUsed: true
+
+    # Parallel processing (faster analysis)
+    parallel:
+        jobSize: 20
+        maximumNumberOfProcesses: 32
+        minimumNumberOfJobsPerProcess: 2
+
+    # Memory limit
+    memoryLimit: 1G
+
+    # Result cache
+    tmpDir: build/phpstan
+
+    # Report unmatched ignored errors
+    reportUnmatchedIgnoredErrors: true
+
+    # Report ignored wrong PHPDoc types
+    reportIncorrectPhpDocTypeInVarTag: true
+
+    # Check for missing return types
+    checkMissingReturnTypes: true
+
+    # Check for missing parameter types
+    checkMissingParameterTypes: true
+
+    # Bleeding edge features
+    checkBenevolentUnionTypes: true
+    checkUninitializedProperties: true
