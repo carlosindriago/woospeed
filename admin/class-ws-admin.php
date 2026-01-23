@@ -29,10 +29,82 @@ class WooSpeed_Admin
         add_action('admin_enqueue_scripts', [$this, 'enqueue_scripts']);
         add_action('admin_init', [$this, 'maybe_upgrade_tables']);
         add_action('admin_init', [$this, 'handle_seed_actions']);
+        add_action('admin_notices', [$this, 'show_migration_notice']);
 
         // WooCommerce Logic Hooks
         add_action('woocommerce_order_status_completed', [$this, 'sync_order'], 10, 1);
         add_action('woocommerce_order_status_changed', [$this, 'handle_status_change'], 10, 4);
+    }
+
+    /**
+     * Show Migration Notice
+     */
+    public function show_migration_notice()
+    {
+        $migration = get_option('woospeed_migration_status', []);
+        $status = $migration['status'] ?? 'not_needed';
+
+        if ($status === 'not_needed' || $status === 'completed') {
+            return;
+        }
+
+        $total = $migration['total_orders'] ?? 0;
+        $migrated = $migration['migrated_count'] ?? 0;
+        $errors = $migration['error_count'] ?? 0;
+
+        if ($status === 'pending') {
+            $migrate_url = admin_url('admin.php?page=woospeed-migration');
+            ?>
+            <div class="notice notice-warning is-dismissible">
+                <p>
+                    <strong>🚀 WooSpeed Analytics:</strong>
+                    <?php printf(
+                        __('We detected %s existing orders that need to be synchronized for accurate analytics.', 'woospeed-analytics'),
+                        '<strong>' . number_format($total) . '</strong>'
+                    ); ?>
+                </p>
+                <p>
+                    <a href="<?php echo esc_url($migrate_url); ?>" class="button button-primary">
+                        <?php _e('Start Migration', 'woospeed-analytics'); ?>
+                    </a>
+                </p>
+            </div>
+            <?php
+        } elseif ($status === 'in_progress') {
+            $percent = $total > 0 ? round(($migrated / $total) * 100) : 0;
+            ?>
+            <div class="notice notice-info">
+                <p>
+                    <strong>⏳ WooSpeed Analytics:</strong>
+                    <?php printf(
+                        __('Migration in progress: %s of %s orders (%s%%)', 'woospeed-analytics'),
+                        number_format($migrated),
+                        number_format($total),
+                        $percent
+                    ); ?>
+                </p>
+            </div>
+            <?php
+        } elseif ($status === 'error') {
+            ?>
+            <div class="notice notice-error">
+                <p>
+                    <strong>⚠️ WooSpeed Analytics:</strong>
+                    <?php printf(
+                        __('Migration encountered %s errors. %s of %s orders migrated.', 'woospeed-analytics'),
+                        '<strong>' . $errors . '</strong>',
+                        number_format($migrated),
+                        number_format($total)
+                    ); ?>
+                </p>
+                <p>
+                    <a href="<?php echo esc_url(admin_url('admin.php?page=woospeed-migration')); ?>" class="button">
+                        <?php _e('View Details', 'woospeed-analytics'); ?>
+                    </a>
+                </p>
+            </div>
+            <?php
+        }
     }
 
     /**
@@ -67,6 +139,24 @@ class WooSpeed_Admin
             'woospeed-generator',
             [$this, 'render_generator_page']
         );
+
+        // Migration page (hidden from menu, accessible via notice)
+        add_submenu_page(
+            null, // Hidden from menu
+            __('Data Migration', 'woospeed-analytics'),
+            __('Data Migration', 'woospeed-analytics'),
+            'manage_woocommerce',
+            'woospeed-migration',
+            [$this, 'render_migration_page']
+        );
+    }
+
+    /**
+     * Render Migration Page
+     */
+    public function render_migration_page()
+    {
+        include WS_PLUGIN_DIR . 'admin/partials/ws-migration-view.php';
     }
 
     /**
@@ -99,7 +189,20 @@ class WooSpeed_Admin
                     'sold' => __('sold', 'woospeed-analytics'),
                     'load_time' => __('Load Time', 'woospeed-analytics'),
                     'no_data' => __('No data yet', 'woospeed-analytics'),
-                    'revenue' => __('Revenue ($)', 'woospeed-analytics')
+                    'revenue' => __('Revenue ($)', 'woospeed-analytics'),
+                    'presets' => [
+                        'today' => __('Today', 'woospeed-analytics'),
+                        'yesterday' => __('Yesterday', 'woospeed-analytics'),
+                        'week_to_date' => __('Week to date', 'woospeed-analytics'),
+                        'last_week' => __('Last week', 'woospeed-analytics'),
+                        'month_to_date' => __('Month to date', 'woospeed-analytics'),
+                        'last_month' => __('Last month', 'woospeed-analytics'),
+                        'quarter_to_date' => __('Quarter to date', 'woospeed-analytics'),
+                        'last_quarter' => __('Last quarter', 'woospeed-analytics'),
+                        'year_to_date' => __('Year to date', 'woospeed-analytics'),
+                        'last_year' => __('Last year', 'woospeed-analytics'),
+                        'custom' => __('Custom', 'woospeed-analytics')
+                    ]
                 ]
             ]);
         }
