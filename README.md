@@ -13,7 +13,10 @@ By implementing a **simplified CQRS (Command Query Responsibility Segregation)**
 | Feature | Description |
 |---------|-------------|
 | **⚡ Lightning Fast** | 0.01s query times via Flat Table architecture |
-| **📊 Real-Time Dashboard** | KPIs, charts, and leaderboards with auto-refresh |
+| **📊 Dashboard 3.0** | Advanced KPIs, charts, and leaderboards with auto-refresh |
+| **📅 Advanced Date Picker** | WooCommerce Analytics-style presets (Today, Week, Month, Quarter, Year) |
+| **⚙️ Settings Page** | Full customization of widgets and behavior |
+| **🔄 Order Migration** | Batch import of existing WooCommerce orders |
 | **🔒 Enterprise Security** | CSRF protection, prepared statements, capability checks |
 | **🌍 Multilingual (i18n)** | English source + Spanish translation included |
 | **🏗️ Modular Architecture** | SRP-based class structure for maintainability |
@@ -43,13 +46,75 @@ wp_wc_speed_order_items   -- Product-level details (indexed: product_id, report_
 
 ---
 
-## 📊 Dashboard 2.0
+## 📊 Dashboard 3.0 (NEW!)
 
-- **4 KPI Cards**: Revenue, Orders, Avg Order Value, Max Order
-- **Dynamic Date Filters**: 7 days, 30 days, Quarter, Full Year
-- **Sales Trend Chart**: Interactive line chart with Chart.js
-- **Top Products Leaderboard**: Real-time ranking by quantity sold
-- **Auto-Refresh**: 10-second polling for live updates
+### KPI Cards
+| Card | Description |
+|------|-------------|
+| 💰 **Total Revenue** | Sum of all order totals |
+| 📦 **Orders** | Count of orders in period |
+| 📈 **Avg Order Value** | Revenue / Orders |
+| 🏆 **Max Order** | Highest single order value |
+| 🚀 **Best Sales Day** | Day with highest revenue |
+| 📉 **Lowest Sales Day** | Day with lowest revenue |
+
+### Charts
+- **Sales Trend**: Interactive line chart showing daily revenue
+- **Sales by Day of Week**: Bar chart showing Mon-Sun distribution
+
+### Leaderboards
+- **Top Products**: Best-selling products by quantity
+- **Least Sold Products**: Lowest-performing products
+- **Top Categories**: Categories ranked by revenue
+
+### Date Range Picker
+WooCommerce Analytics-style presets:
+- Today, Yesterday
+- Week to date, Last week
+- Month to date, Last month
+- Quarter to date, Last quarter
+- Year to date, Last year
+- Custom date range
+
+---
+
+## ⚙️ Settings Page (NEW!)
+
+Navigate to **Speed Analytics → Settings** to customize:
+
+### General Settings
+- **Default Date Range**: Choose the default period when opening dashboard
+- **Auto-Refresh Interval**: Set automatic refresh (10s to 5min, or disabled)
+
+### Dashboard Widgets
+Toggle visibility of each widget:
+- KPI Cards
+- Sales Trend Chart
+- Sales by Day of Week Chart
+- Top Products Leaderboard
+- Least Sold Products
+- Top Categories
+
+### Appearance
+- **Theme**: Auto (System) / Light / Dark
+
+### Data Management
+- Link to Migration Tool for syncing existing orders
+- Database statistics (record counts)
+
+### Developer Tools
+- **Generate Dummy Data**: Create 10-1000 test orders
+- **Clean Dummy Data**: Remove all test data
+
+---
+
+## 🔄 Order Migration System
+
+On first activation, WooSpeed detects existing WooCommerce orders and offers to migrate them:
+
+1. **Admin Notice**: Alert showing number of orders to migrate
+2. **Migration Page**: Progress bar with batch processing
+3. **Status Tracking**: Percentage complete, error handling, resumable
 
 ---
 
@@ -63,7 +128,7 @@ wp_wc_speed_order_items   -- Product-level details (indexed: product_id, report_
 | **Authorization** | `manage_woocommerce` / `manage_options` checks |
 | **Direct Access** | `ABSPATH` and `WP_UNINSTALL_PLUGIN` guards |
 
-**Security Score: 98%** (49/50) - See [Security Audit](./SECURITY.md)
+**Security Score: 98%** (49/50)
 
 ---
 
@@ -89,6 +154,8 @@ wp_wc_speed_order_items   -- Product-level details (indexed: product_id, report_
    - `wp_wc_speed_reports`
    - `wp_wc_speed_order_items`
 
+4. If you have existing orders, complete the migration when prompted
+
 ---
 
 ## 📖 Usage
@@ -96,15 +163,16 @@ wp_wc_speed_order_items   -- Product-level details (indexed: product_id, report_
 ### Dashboard
 Navigate to **Speed Analytics → Dashboard** to view:
 - Real-time KPIs with colored indicator cards
-- Sales trend chart with selectable date ranges
-- Top 5 products by quantity sold
+- Best and worst performing days
+- Sales trend and weekday distribution charts
+- Product and category leaderboards
 
-### Stress Test Generator
-Navigate to **Speed Analytics → Data Generator** to:
-1. **Generate Products**: Create 20 demo products
-2. **Mass Load**: Generate 5,000 orders (batched AJAX)
-3. **Quick Test**: Generate 50 orders
-4. **Cleanup**: Remove all test data
+### Settings
+Navigate to **Speed Analytics → Settings** to:
+- Configure default date range
+- Toggle visible widgets
+- Set auto-refresh interval
+- Access developer tools
 
 ---
 
@@ -113,20 +181,24 @@ Navigate to **Speed Analytics → Data Generator** to:
 ```
 woospeed-analytics/
 ├── assets/
-│   ├── css/admin-style.css      # Dashboard styles
+│   ├── css/admin-style.css      # Dashboard & Settings styles
 │   └── js/
-│       ├── admin-dashboard.js   # Chart & KPI logic
+│       ├── admin-dashboard.js   # Charts, KPIs, Leaderboards
 │       └── admin-generator.js   # Batch seeding
 ├── includes/
-│   ├── class-ws-repository.php  # Database layer
+│   ├── class-ws-repository.php  # Database layer (10 query methods)
 │   ├── class-ws-seeder.php      # Data generation
 │   └── class-ws-api.php         # AJAX endpoints
 ├── admin/
 │   ├── class-ws-admin.php       # Controller
-│   └── partials/                # View templates
+│   └── partials/
+│       ├── ws-dashboard-view.php   # Dashboard UI
+│       ├── ws-settings-view.php    # Settings UI (NEW)
+│       ├── ws-migration-view.php   # Migration UI
+│       └── ws-generator-view.php   # Generator UI
 ├── languages/                   # i18n files
 ├── uninstall.php                # Clean removal
-└── woospeed-analytics.php       # Bootstrapper
+└── woospeed-analytics.php       # Bootstrapper (v3.0.0)
 ```
 
 ---
@@ -134,11 +206,34 @@ woospeed-analytics/
 ## ⚡ Performance Benchmarks
 
 | Metric | Native WooCommerce | WooSpeed Analytics |
-|--------|--------------------|--------------------|
+|--------|--------------------|--------------------
 | KPI Query (5k orders) | 8-15 seconds | **< 50ms** |
 | Chart Data | 5-10 seconds | **< 30ms** |
 | Top Products | 3-8 seconds | **< 20ms** |
+| Weekday Analysis | N/A | **< 25ms** |
+| Category Ranking | 5-10 seconds | **< 30ms** |
 | Write (Order Sync) | O(n) | **O(1)** |
+
+---
+
+## 📝 Changelog
+
+### v3.0.0 (2026-01-22)
+- **Dashboard 3.0**: Best/Worst Day cards, Weekday chart, Bottom Products, Top Categories
+- **Settings Page**: Full plugin configuration UI
+- **Developer Tools**: Moved dummy data generator to settings
+- **UI Polish**: New leaderboard designs, empty states
+
+### v2.2.0
+- Order Migration System with progress bar
+- Advanced Date Range Picker (WooCommerce Analytics style)
+
+### v2.0.0
+- Security Audit (98% score)
+- Production-ready README
+
+### v1.0.0
+- Initial release with Flat Table architecture
 
 ---
 

@@ -60,11 +60,15 @@
 }
 
 @media (max-width: 1200px) {
-    .ws-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .ws-kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
 @media (max-width: 600px) {
-    .ws-kpi-grid { grid-template-columns: 1fr; }
+    .ws-kpi-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 .ws-card {
@@ -94,10 +98,21 @@
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
 }
 
-.ws-card.revenue::before { background: linear-gradient(180deg, #10b981, #059669); }
-.ws-card.orders::before { background: linear-gradient(180deg, #6366f1, #4f46e5); }
-.ws-card.aov::before { background: linear-gradient(180deg, #f59e0b, #d97706); }
-.ws-card.max::before { background: linear-gradient(180deg, #ec4899, #db2777); }
+.ws-card.revenue::before {
+    background: linear-gradient(180deg, #10b981, #059669);
+}
+
+.ws-card.orders::before {
+    background: linear-gradient(180deg, #6366f1, #4f46e5);
+}
+
+.ws-card.aov::before {
+    background: linear-gradient(180deg, #f59e0b, #d97706);
+}
+
+.ws-card.max::before {
+    background: linear-gradient(180deg, #ec4899, #db2777);
+}
 
 .ws-card-inner {
     display: flex;
@@ -116,10 +131,21 @@
     flex-shrink: 0;
 }
 
-.ws-card-icon.revenue { background: rgba(16, 185, 129, 0.12); }
-.ws-card-icon.orders { background: rgba(99, 102, 241, 0.12); }
-.ws-card-icon.aov { background: rgba(245, 158, 11, 0.12); }
-.ws-card-icon.max { background: rgba(236, 72, 153, 0.12); }
+.ws-card-icon.revenue {
+    background: rgba(16, 185, 129, 0.12);
+}
+
+.ws-card-icon.orders {
+    background: rgba(99, 102, 241, 0.12);
+}
+
+.ws-card-icon.aov {
+    background: rgba(245, 158, 11, 0.12);
+}
+
+.ws-card-icon.max {
+    background: rgba(236, 72, 153, 0.12);
+}
 
 .ws-card-content {
     flex: 1;
@@ -476,3 +502,178 @@
     background: var(--ws-primary-light);
 }
 
+/* ========================================
+   Dashboard 3.0 - New Widgets
+   ======================================== */
+
+/* Extremes Grid (Best/Worst Day) */
+.ws-extremes-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+@media (max-width: 768px) {
+    .ws-extremes-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.ws-best-day::before {
+    background: linear-gradient(180deg, #22c55e, #16a34a);
+}
+
+.ws-worst-day::before {
+    background: linear-gradient(180deg, #f97316, #ea580c);
+}
+
+.ws-card-icon.best {
+    background: rgba(34, 197, 94, 0.12);
+}
+
+.ws-card-icon.worst {
+    background: rgba(249, 115, 22, 0.12);
+}
+
+.ws-subvalue {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ws-gray-500);
+    margin: 4px 0 0;
+}
+
+/* Charts Row - Equal width */
+.ws-main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+@media (max-width: 1024px) {
+    .ws-main-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.ws-section-title {
+    margin: 0 0 16px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ws-gray-900);
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+/* Leaderboards Grid */
+.ws-leaderboards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+@media (max-width: 1200px) {
+    .ws-leaderboards-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .ws-leaderboards-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Weekday Chart specific */
+#weekdayChart {
+    max-height: 280px;
+}
+
+/* Category leaderboard styling */
+.ws-category-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--ws-gray-100);
+}
+
+.ws-category-item:last-child {
+    border-bottom: none;
+}
+
+.ws-category-name {
+    flex: 1;
+    font-weight: 500;
+    color: var(--ws-gray-700);
+}
+
+.ws-category-revenue {
+    font-weight: 600;
+    color: var(--ws-success);
+    background: rgba(16, 185, 129, 0.1);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 13px;
+}
+
+/* Bottom products styling */
+.ws-bottom-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--ws-gray-100);
+}
+
+.ws-bottom-item:last-child {
+    border-bottom: none;
+}
+
+.ws-bottom-rank {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(249, 115, 22, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 12px;
+    color: #ea580c;
+    margin-right: 12px;
+}
+
+.ws-bottom-name {
+    flex: 1;
+    font-weight: 500;
+    color: var(--ws-gray-700);
+}
+
+.ws-bottom-sold {
+    font-weight: 600;
+    color: var(--ws-danger);
+    background: rgba(239, 68, 68, 0.1);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 13px;
+}
+
+/* Empty state */
+.ws-empty-state {
+    text-align: center;
+    padding: 30px 20px;
+    color: var(--ws-gray-500);
+}
+
+.ws-empty-state-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+    opacity: 0.5;
+}
+
+.ws-empty-state-text {
+    font-size: 14px;
+}

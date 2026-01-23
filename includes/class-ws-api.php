@@ -57,6 +57,12 @@ class WooSpeed_API
         $chart = $this->repository->get_chart_data($start_date, $end_date);
         $leaderboard = $this->repository->get_top_products($start_date, $end_date);
 
+        // New v3.0 statistics
+        $weekday_sales = $this->repository->get_weekday_sales($start_date, $end_date);
+        $extreme_days = $this->repository->get_extreme_days($start_date, $end_date);
+        $bottom_products = $this->repository->get_bottom_products($start_date, $end_date);
+        $top_categories = $this->repository->get_top_categories($start_date, $end_date);
+
         // Format Response
         wp_send_json_success([
             'kpis' => [
@@ -67,6 +73,10 @@ class WooSpeed_API
             ],
             'chart' => $chart,
             'leaderboard' => $leaderboard,
+            'weekday_sales' => $weekday_sales,
+            'extreme_days' => $extreme_days,
+            'bottom_products' => $bottom_products,
+            'top_categories' => $top_categories,
             'period' => [
                 'start' => $start_date,
                 'end' => $end_date

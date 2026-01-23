@@ -247,8 +247,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function renderLeaderboard(items) {
         const container = document.getElementById('leaderboard-container');
+        if (!container) return;
+
         if (!items || items.length === 0) {
-            container.innerHTML = `<div class="ws-loading">${woospeed_dashboard_vars.i18n.no_data}</div>`;
+            container.innerHTML = `<div class="ws-empty-state">
+                <div class="ws-empty-state-icon">📦</div>
+                <div class="ws-empty-state-text">${woospeed_dashboard_vars.i18n.no_data}</div>
+            </div>`;
             return;
         }
         container.innerHTML = items.map((item, i) => `
@@ -258,6 +263,146 @@ document.addEventListener('DOMContentLoaded', function () {
                 <span class="ws-leaderboard-sold">${item.total_sold} ${woospeed_dashboard_vars.i18n.sold}</span>
             </div>
         `).join('');
+    }
+
+    function renderBottomProducts(items) {
+        const container = document.getElementById('bottom-products-container');
+        if (!container) return;
+
+        if (!items || items.length === 0) {
+            container.innerHTML = `<div class="ws-empty-state">
+                <div class="ws-empty-state-icon">📊</div>
+                <div class="ws-empty-state-text">${woospeed_dashboard_vars.i18n.no_data}</div>
+            </div>`;
+            return;
+        }
+        container.innerHTML = items.map((item, i) => `
+            <div class="ws-bottom-item">
+                <span class="ws-bottom-rank">${i + 1}</span>
+                <span class="ws-bottom-name">${item.product_name}</span>
+                <span class="ws-bottom-sold">${item.total_sold} ${woospeed_dashboard_vars.i18n.sold}</span>
+            </div>
+        `).join('');
+    }
+
+    function renderCategories(items) {
+        const container = document.getElementById('categories-container');
+        if (!container) return;
+
+        if (!items || items.length === 0) {
+            container.innerHTML = `<div class="ws-empty-state">
+                <div class="ws-empty-state-icon">📁</div>
+                <div class="ws-empty-state-text">${woospeed_dashboard_vars.i18n.no_data}</div>
+            </div>`;
+            return;
+        }
+        container.innerHTML = items.map(item => `
+            <div class="ws-category-item">
+                <span class="ws-category-name">${item.category_name}</span>
+                <span class="ws-category-revenue">${formatCurrency(item.total_revenue)}</span>
+            </div>
+        `).join('');
+    }
+
+    function renderExtremeDays(extremes) {
+        const bestDayEl = document.getElementById('kpi-best-day');
+        const bestTotalEl = document.getElementById('kpi-best-total');
+        const worstDayEl = document.getElementById('kpi-worst-day');
+        const worstTotalEl = document.getElementById('kpi-worst-total');
+
+        if (bestDayEl && extremes.best_day) {
+            const bestDate = new Date(extremes.best_day);
+            bestDayEl.textContent = bestDate.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+        } else if (bestDayEl) {
+            bestDayEl.textContent = '--';
+        }
+
+        if (bestTotalEl) {
+            bestTotalEl.textContent = formatCurrency(extremes.best_total || 0);
+        }
+
+        if (worstDayEl && extremes.worst_day) {
+            const worstDate = new Date(extremes.worst_day);
+            worstDayEl.textContent = worstDate.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+        } else if (worstDayEl) {
+            worstDayEl.textContent = '--';
+        }
+
+        if (worstTotalEl) {
+            worstTotalEl.textContent = formatCurrency(extremes.worst_total || 0);
+        }
+    }
+
+    // Weekday chart
+    let weekdayChart = null;
+    const weekdayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    function initWeekdayChart(data) {
+        const canvas = document.getElementById('weekdayChart');
+        if (!canvas) return;
+
+        const ctx2 = canvas.getContext('2d');
+
+        // Process data - SQL DAYOFWEEK returns 1=Sunday, 7=Saturday
+        const salesByDay = [0, 0, 0, 0, 0, 0, 0];
+        data.forEach(d => {
+            const dayIndex = parseInt(d.weekday) - 1; // Convert 1-7 to 0-6
+            if (dayIndex >= 0 && dayIndex < 7) {
+                salesByDay[dayIndex] = parseFloat(d.total_sales);
+            }
+        });
+
+        weekdayChart = new Chart(ctx2, {
+            type: 'bar',
+            data: {
+                labels: weekdayLabels,
+                datasets: [{
+                    label: woospeed_dashboard_vars.i18n.revenue,
+                    data: salesByDay,
+                    backgroundColor: [
+                        'rgba(239, 68, 68, 0.7)',   // Sun - Red
+                        'rgba(99, 102, 241, 0.7)',  // Mon - Indigo
+                        'rgba(16, 185, 129, 0.7)', // Tue - Green
+                        'rgba(245, 158, 11, 0.7)', // Wed - Amber
+                        'rgba(236, 72, 153, 0.7)', // Thu - Pink
+                        'rgba(59, 130, 246, 0.7)', // Fri - Blue
+                        'rgba(139, 92, 246, 0.7)'  // Sat - Purple
+                    ],
+                    borderColor: [
+                        '#ef4444', '#6366f1', '#10b981', '#f59e0b', '#ec4899', '#3b82f6', '#8b5cf6'
+                    ],
+                    borderWidth: 2,
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    function updateWeekdayChart(data) {
+        if (!weekdayChart) {
+            initWeekdayChart(data);
+            return;
+        }
+
+        const salesByDay = [0, 0, 0, 0, 0, 0, 0];
+        data.forEach(d => {
+            const dayIndex = parseInt(d.weekday) - 1;
+            if (dayIndex >= 0 && dayIndex < 7) {
+                salesByDay[dayIndex] = parseFloat(d.total_sales);
+            }
+        });
+
+        weekdayChart.data.datasets[0].data = salesByDay;
+        weekdayChart.update('none');
     }
 
     function loadDashboard() {
@@ -275,7 +420,15 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(res => res.json())
             .then(response => {
                 if (!response.success) return;
-                const { kpis, chart, leaderboard } = response.data;
+                const {
+                    kpis,
+                    chart,
+                    leaderboard,
+                    weekday_sales,
+                    extreme_days,
+                    bottom_products,
+                    top_categories
+                } = response.data;
 
                 // KPIs
                 const revenueEl = document.getElementById('kpi-revenue');
@@ -299,8 +452,28 @@ document.addEventListener('DOMContentLoaded', function () {
                     speedChart.update('none');
                 }
 
+                // v3.0 - Extreme Days
+                if (extreme_days) {
+                    renderExtremeDays(extreme_days);
+                }
+
+                // v3.0 - Weekday Chart
+                if (weekday_sales) {
+                    updateWeekdayChart(weekday_sales);
+                }
+
                 // Leaderboard
                 renderLeaderboard(leaderboard);
+
+                // v3.0 - Bottom Products
+                if (bottom_products) {
+                    renderBottomProducts(bottom_products);
+                }
+
+                // v3.0 - Top Categories
+                if (top_categories) {
+                    renderCategories(top_categories);
+                }
 
                 // Query Time
                 const elapsed = ((performance.now() - startTime) / 1000).toFixed(3);

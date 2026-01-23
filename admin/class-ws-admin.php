@@ -133,14 +133,14 @@ class WooSpeed_Admin
 
         add_submenu_page(
             'woospeed-dashboard',
-            __('Data Generator', 'woospeed-analytics'),
-            __('Data Generator', 'woospeed-analytics'),
+            __('Settings', 'woospeed-analytics'),
+            __('Settings', 'woospeed-analytics'),
             'manage_woocommerce',
-            'woospeed-generator',
-            [$this, 'render_generator_page']
+            'woospeed-settings',
+            [$this, 'render_settings_page']
         );
 
-        // Migration page (hidden from menu, accessible via notice)
+        // Migration page (hidden from menu, accessible via notice or settings)
         add_submenu_page(
             null, // Hidden from menu
             __('Data Migration', 'woospeed-analytics'),
@@ -148,6 +148,16 @@ class WooSpeed_Admin
             'manage_woocommerce',
             'woospeed-migration',
             [$this, 'render_migration_page']
+        );
+
+        // Generator page (hidden, accessible via settings)
+        add_submenu_page(
+            null,
+            __('Data Generator', 'woospeed-analytics'),
+            __('Data Generator', 'woospeed-analytics'),
+            'manage_woocommerce',
+            'woospeed-generator',
+            [$this, 'render_generator_page']
         );
     }
 
@@ -157,6 +167,14 @@ class WooSpeed_Admin
     public function render_migration_page()
     {
         include WS_PLUGIN_DIR . 'admin/partials/ws-migration-view.php';
+    }
+
+    /**
+     * Render Settings Page
+     */
+    public function render_settings_page()
+    {
+        include WS_PLUGIN_DIR . 'admin/partials/ws-settings-view.php';
     }
 
     /**

@@ -199,4 +199,118 @@ class WooSpeed_Repository
         global $wpdb;
         return $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $this->table_items WHERE order_id = %d", $order_id)) > 0;
     }
+
+    /**
+     * Get sales grouped by day of week
+     * Returns array with weekday (0=Sunday, 6=Saturday), total_sales, order_count
+     */
+    public function get_weekday_sales($start_date, $end_date)
+    {
+        global $wpdb;
+        return $wpdb->get_results($wpdb->prepare(
+            "SELECT 
+                DAYOFWEEK(report_date) as weekday,
+                SUM(order_total) as total_sales,
+                COUNT(id) as order_count
+             FROM $this->table_reports 
+             WHERE report_date BETWEEN %s AND %s
+             GROUP BY DAYOFWEEK(report_date)
+             ORDER BY weekday ASC",
+            $start_date,
+            $end_date
+        ));
+    }
+
+    /**
+     * Get the days with highest and lowest sales
+     * Returns object with best_day, best_total, worst_day, worst_total
+     */
+    public function get_extreme_days($start_date, $end_date)
+    {
+        global $wpdb;
+
+        // Get best day
+        $best = $wpdb->get_row($wpdb->prepare(
+            "SELECT report_date as day, SUM(order_total) as total
+             FROM $this->table_reports 
+             WHERE report_date BETWEEN %s AND %s
+             GROUP BY report_date
+             ORDER BY total DESC
+             LIMIT 1",
+            $start_date,
+            $end_date
+        ));
+
+        // Get worst day
+        $worst = $wpdb->get_row($wpdb->prepare(
+            "SELECT report_date as day, SUM(order_total) as total
+             FROM $this->table_reports 
+             WHERE report_date BETWEEN %s AND %s
+             GROUP BY report_date
+             ORDER BY total ASC
+             LIMIT 1",
+            $start_date,
+            $end_date
+        ));
+
+        return (object) [
+            'best_day' => $best ? $best->day : null,
+            'best_total' => $best ? floatval($best->total) : 0,
+            'worst_day' => $worst ? $worst->day : null,
+            'worst_total' => $worst ? floatval($worst->total) : 0,
+        ];
+    }
+
+    /**
+     * Get least sold products (bottom performers)
+     */
+    public function get_bottom_products($start_date, $end_date, $limit = 5)
+    {
+        global $wpdb;
+        return $wpdb->get_results($wpdb->prepare(
+            "SELECT 
+                product_name,
+                product_id,
+                SUM(quantity) as total_sold,
+                SUM(line_total) as total_revenue
+             FROM $this->table_items 
+             WHERE report_date BETWEEN %s AND %s
+             GROUP BY product_id, product_name
+             ORDER BY total_sold ASC
+             LIMIT %d",
+            $start_date,
+            $end_date,
+            $limit
+        ));
+    }
+
+    /**
+     * Get top categories by revenue
+     * Joins with WooCommerce product terms
+     */
+    public function get_top_categories($start_date, $end_date, $limit = 5)
+    {
+        global $wpdb;
+
+        $query = $wpdb->prepare(
+            "SELECT 
+                t.name as category_name,
+                t.term_id as category_id,
+                SUM(oi.line_total) as total_revenue,
+                SUM(oi.quantity) as total_sold
+             FROM $this->table_items oi
+             INNER JOIN {$wpdb->term_relationships} tr ON oi.product_id = tr.object_id
+             INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id AND tt.taxonomy = 'product_cat'
+             INNER JOIN {$wpdb->terms} t ON tt.term_id = t.term_id
+             WHERE oi.report_date BETWEEN %s AND %s
+             GROUP BY t.term_id, t.name
+             ORDER BY total_revenue DESC
+             LIMIT %d",
+            $start_date,
+            $end_date,
+            $limit
+        );
+
+        return $wpdb->get_results($query);
+    }
 }

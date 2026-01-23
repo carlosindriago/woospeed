@@ -2,7 +2,7 @@
 /*
 Plugin Name: WooSpeed Analytics 🚀
 Description: High-performance WooCommerce analytics engine with Flat Table architecture for 0.01s report generation.
-Version: 2.2.0
+Version: 3.0.0
 Author: Carlos Indriago
 Text Domain: woospeed-analytics
 Domain Path: /languages
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
 }
 
 // 1. Constants
-define('WS_VERSION', '2.2.0');
+define('WS_VERSION', '3.0.0');
 define('WS_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('WS_PLUGIN_URL', plugin_dir_url(__FILE__));
 
