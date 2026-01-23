@@ -34,12 +34,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
         switch (preset) {
             case 'today':
-                start = end = new Date(today);
+                start = new Date(today);
+                end = new Date(today);
                 break;
             case 'yesterday':
-                start = end = new Date(today);
+                start = new Date(today);
                 start.setDate(start.getDate() - 1);
-                end.setDate(end.getDate() - 1);
+                end = new Date(start); // Clone start after modification
                 break;
             case 'week_to_date':
                 start = new Date(today);
