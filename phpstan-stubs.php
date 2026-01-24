@@ -14,7 +14,8 @@ declare(strict_types=1);
 /**
  * WordPress Database class stub
  */
-class wpdb {
+class wpdb
+{
     public $prefix = 'wp_';
     public $posts;
     public $postmeta;
@@ -31,7 +32,8 @@ class wpdb {
      * @param mixed ...$args
      * @return string
      */
-    public function prepare(string $query, ...$args): string {
+    public function prepare(string $query, ...$args): string
+    {
         return '';
     }
 
@@ -41,7 +43,8 @@ class wpdb {
      * @param string $query
      * @return int|bool
      */
-    public function query(string $query): int|bool {
+    public function query(string $query): int|bool
+    {
         return false;
     }
 
@@ -53,7 +56,8 @@ class wpdb {
      * @param int $offset
      * @return string|null
      */
-    public function get_var(string $query, int $x = 0, int $offset = 0): ?string {
+    public function get_var(string $query, int $x = 0, int $offset = 0): ?string
+    {
         return null;
     }
 
@@ -65,7 +69,8 @@ class wpdb {
      * @param int $y
      * @return object|void
      */
-    public function get_row(string $query, string $output = OBJECT, int $y = 0): object|null {
+    public function get_row(string $query, string $output = OBJECT, int $y = 0): object|null
+    {
         return null;
     }
 
@@ -76,7 +81,8 @@ class wpdb {
      * @param string $output
      * @return array
      */
-    public function get_results(string $query, string $output = OBJECT): array {
+    public function get_results(string $query, string $output = OBJECT): array
+    {
         return [];
     }
 
@@ -87,7 +93,8 @@ class wpdb {
      * @param int $x
      * @return array
      */
-    public function get_col(string $query, int $x = 0): array {
+    public function get_col(string $query, int $x = 0): array
+    {
         return [];
     }
 
@@ -99,7 +106,8 @@ class wpdb {
      * @param string|string[] $format
      * @return int|bool
      */
-    public function insert(string $table, array $data, $format = null): int|bool {
+    public function insert(string $table, array $data, $format = null): int|bool
+    {
         return false;
     }
 
@@ -113,7 +121,8 @@ class wpdb {
      * @param string|string[] $where_format
      * @return int|bool
      */
-    public function update(string $table, array $data, array $where, $format = null, $where_format = null): int|bool {
+    public function update(string $table, array $data, array $where, $format = null, $where_format = null): int|bool
+    {
         return false;
     }
 
@@ -125,7 +134,8 @@ class wpdb {
      * @param string|string[] $where_format
      * @return int|bool
      */
-    public function delete(string $table, array $where, $where_format = null): int|bool {
+    public function delete(string $table, array $where, $where_format = null): int|bool
+    {
         return false;
     }
 
@@ -134,7 +144,8 @@ class wpdb {
      *
      * @return string
      */
-    public function get_charset_collate(): string {
+    public function get_charset_collate(): string
+    {
         return 'DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci';
     }
 
@@ -143,7 +154,7 @@ class wpdb {
      *
      * @return string
      */
-    public function last_error: string = '';
+    public string $last_error = '';
 }
 
 /**
@@ -153,7 +164,8 @@ class wpdb {
  * @param callable $callback
  * @return bool
  */
-function register_activation_hook(string $file, callable $callback): bool {
+function register_activation_hook(string $file, callable $callback): bool
+{
     return true;
 }
 
@@ -164,7 +176,8 @@ function register_activation_hook(string $file, callable $callback): bool {
  * @param callable $callback
  * @return bool
  */
-function register_deactivation_hook(string $file, callable $callback): bool {
+function register_deactivation_hook(string $file, callable $callback): bool
+{
     return true;
 }
 
@@ -260,7 +273,8 @@ function wp_enqueue_script(
  * @param array $data
  * @return bool
  */
-function wp_localize_script(string $handle, string $object_name, array $data): bool {
+function wp_localize_script(string $handle, string $object_name, array $data): bool
+{
     return true;
 }
 
@@ -271,7 +285,8 @@ function wp_localize_script(string $handle, string $object_name, array $data): b
  * @param string $plugin
  * @return string
  */
-function plugins_url(string $path = '', string $plugin = ''): string {
+function plugins_url(string $path = '', string $plugin = ''): string
+{
     return '';
 }
 
@@ -281,7 +296,8 @@ function plugins_url(string $path = '', string $plugin = ''): string {
  * @param string $file
  * @return string
  */
-function plugin_dir_path(string $file): string {
+function plugin_dir_path(string $file): string
+{
     return '';
 }
 
@@ -291,7 +307,8 @@ function plugin_dir_path(string $file): string {
  * @param string $file
  * @return string
  */
-function plugin_dir_url(string $file): string {
+function plugin_dir_url(string $file): string
+{
     return '';
 }
 
@@ -300,13 +317,7 @@ function plugin_dir_url(string $file): string {
  *
  * @return bool
  */
-function is_admin(): bool {
+function is_admin(): bool
+{
     return false;
-}
-
-/**
- * Stub for wp_localize_script (alias for consistency)
- */
-function wp_localize_script(string $handle, string $object_name, array $l10n): bool {
-    return true;
 }
