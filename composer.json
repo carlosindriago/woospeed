@@ -48,8 +48,8 @@
         "test:integration": "phpunit --testsuite integration",
         "test:coverage": "phpunit --coverage-html coverage/html --coverage-clover coverage/clover.xml",
         "test:ci": "phpunit --coverage-clover coverage/clover.xml",
-        "cs": "phpcs --standard=WordPress",
-        "cs-fix": "phpcbf --standard=WordPress",
+        "cs": "phpcs --standard=WordPress includes/ woospeed-analytics.php",
+        "cs-fix": "phpcbf --standard=WordPress includes/ woospeed-analytics.php",
         "analyze": [
             "@phpstan",
             "@cs"
