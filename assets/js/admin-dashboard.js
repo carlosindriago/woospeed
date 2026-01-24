@@ -79,8 +79,8 @@ class WooSpeedDashboard {
     // ========================================
 
     #initDatePicker() {
-        const trigger = document.getElementById('ws-date-trigger');
-        const dropdown = document.getElementById('ws-date-dropdown');
+        const trigger = document.getElementById('woospeed-date-trigger');
+        const dropdown = document.getElementById('woospeed-date-dropdown');
 
         if (!trigger || !dropdown) return;
 
@@ -129,9 +129,9 @@ class WooSpeedDashboard {
                 tab.classList.add('active');
 
                 const tabName = tab.dataset.tab;
-                document.getElementById('ws-panel-presets').style.display =
+                document.getElementById('woospeed-panel-presets').style.display =
                     tabName === 'presets' ? 'block' : 'none';
-                document.getElementById('ws-panel-custom').style.display =
+                document.getElementById('woospeed-panel-custom').style.display =
                     tabName === 'custom' ? 'block' : 'none';
             });
         });
@@ -139,8 +139,8 @@ class WooSpeedDashboard {
 
     #setupPresetButtons() {
         const presetBtns = document.querySelectorAll('.woospeed-preset-btn');
-        const customStart = document.getElementById('ws-custom-start');
-        const customEnd = document.getElementById('ws-custom-end');
+        const customStart = document.getElementById('woospeed-custom-start');
+        const customEnd = document.getElementById('woospeed-custom-end');
 
         presetBtns.forEach(btn => {
             btn.addEventListener('click', () => {
@@ -163,7 +163,7 @@ class WooSpeedDashboard {
     }
 
     #setupCompareOptions() {
-        const radios = document.querySelectorAll('input[name="ws-compare"]');
+        const radios = document.querySelectorAll('input[name="woospeed-compare"]');
 
         radios.forEach(radio => {
             radio.addEventListener('change', () => {
@@ -173,17 +173,17 @@ class WooSpeedDashboard {
     }
 
     #setupUpdateButton(trigger, dropdown) {
-        const updateBtn = document.getElementById('ws-date-update');
+        const updateBtn = document.getElementById('woospeed-date-update');
 
         if (!updateBtn) return;
 
         updateBtn.addEventListener('click', () => {
             // Check if custom tab is active
-            const customPanel = document.getElementById('ws-panel-custom');
+            const customPanel = document.getElementById('woospeed-panel-custom');
 
             if (customPanel && customPanel.style.display !== 'none') {
-                const customStart = document.getElementById('ws-custom-start');
-                const customEnd = document.getElementById('ws-custom-end');
+                const customStart = document.getElementById('woospeed-custom-start');
+                const customEnd = document.getElementById('woospeed-custom-end');
 
                 if (customStart && customEnd && customStart.value && customEnd.value) {
                     this.#startDate = new Date(customStart.value);
@@ -297,8 +297,8 @@ class WooSpeedDashboard {
     }
 
     #updateDatePickerUI() {
-        const labelEl = document.getElementById('ws-date-label');
-        const rangeTextEl = document.getElementById('ws-date-range-text');
+        const labelEl = document.getElementById('woospeed-date-label');
+        const rangeTextEl = document.getElementById('woospeed-date-range-text');
 
         if (labelEl && woospeed_dashboard_vars.i18n.presets) {
             labelEl.textContent = woospeed_dashboard_vars.i18n.presets[this.#currentPreset] || this.#currentPreset;
@@ -587,7 +587,7 @@ class WooSpeedDashboard {
     }
 
     #updateQueryTime(elapsed) {
-        const timeEl = document.getElementById('ws-query-time');
+        const timeEl = document.getElementById('woospeed-query-time');
 
         if (timeEl) {
             timeEl.textContent = woospeed_dashboard_vars.i18n.load_time + ': ' + elapsed + 's';

@@ -132,7 +132,7 @@
 
     <!-- Best/Worst Day Cards -->
     <div class="woospeed-extremes-grid">
-        <div class="woospeed-card ws-best-day">
+        <div class="woospeed-card woospeed-best-day">
             <div class="woospeed-card-inner">
                 <div class="woospeed-card-icon best">🚀</div>
                 <div class="woospeed-card-content">
@@ -142,7 +142,7 @@
                 </div>
             </div>
         </div>
-        <div class="woospeed-card ws-worst-day">
+        <div class="woospeed-card woospeed-worst-day">
             <div class="woospeed-card-inner">
                 <div class="woospeed-card-icon worst">📉</div>
                 <div class="woospeed-card-content">
@@ -156,14 +156,14 @@
 
     <!-- Charts Row -->
     <div class="woospeed-main-grid">
-        <div class="woospeed-card ws-chart-container">
+        <div class="woospeed-card woospeed-chart-container">
             <h3 class="woospeed-section-title">
                 📈 <?php _e('Sales Trend', 'woospeed-analytics'); ?>
             </h3>
             <canvas id="speedChart"></canvas>
         </div>
 
-        <div class="woospeed-card ws-chart-container">
+        <div class="woospeed-card woospeed-chart-container">
             <h3 class="woospeed-section-title">
                 📊 <?php _e('Sales by Day of Week', 'woospeed-analytics'); ?>
             </h3>
@@ -173,21 +173,21 @@
 
     <!-- Leaderboards Row -->
     <div class="woospeed-leaderboards-grid">
-        <div class="woospeed-card ws-leaderboard">
+        <div class="woospeed-card woospeed-leaderboard">
             <h3>🏆 <?php _e('Top Products', 'woospeed-analytics'); ?></h3>
             <div id="leaderboard-container">
                 <div class="woospeed-loading"><?php _e('Loading...', 'woospeed-analytics'); ?></div>
             </div>
         </div>
 
-        <div class="woospeed-card ws-leaderboard">
+        <div class="woospeed-card woospeed-leaderboard">
             <h3>⬇️ <?php _e('Least Sold Products', 'woospeed-analytics'); ?></h3>
             <div id="bottom-products-container">
                 <div class="woospeed-loading"><?php _e('Loading...', 'woospeed-analytics'); ?></div>
             </div>
         </div>
 
-        <div class="woospeed-card ws-leaderboard">
+        <div class="woospeed-card woospeed-leaderboard">
             <h3>📁 <?php _e('Top Categories', 'woospeed-analytics'); ?></h3>
             <div id="categories-container">
                 <div class="woospeed-loading"><?php _e('Loading...', 'woospeed-analytics'); ?></div>
