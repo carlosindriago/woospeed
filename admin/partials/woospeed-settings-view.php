@@ -47,7 +47,7 @@ if (isset($_POST['woospeed_save_settings']) && wp_verify_nonce($_POST['_wpnonce'
         <?php wp_nonce_field('woospeed_settings_nonce'); ?>
 
         <!-- General Settings -->
-        <div class="ws-settings-section">
+        <div class="woospeed-settings-section">
             <h2>
                 <span class="dashicons dashicons-admin-generic"></span>
                 <?php _e('General Settings', 'woospeed-analytics'); ?>
@@ -131,7 +131,7 @@ if (isset($_POST['woospeed_save_settings']) && wp_verify_nonce($_POST['_wpnonce'
         </div>
 
         <!-- Dashboard Widgets -->
-        <div class="ws-settings-section">
+        <div class="woospeed-settings-section">
             <h2>
                 <span class="dashicons dashicons-screenoptions"></span>
                 <?php _e('Dashboard Widgets', 'woospeed-analytics'); ?>
@@ -175,7 +175,7 @@ if (isset($_POST['woospeed_save_settings']) && wp_verify_nonce($_POST['_wpnonce'
         </div>
 
         <!-- Appearance -->
-        <div class="ws-settings-section">
+        <div class="woospeed-settings-section">
             <h2>
                 <span class="dashicons dashicons-art"></span>
                 <?php _e('Appearance', 'woospeed-analytics'); ?>
@@ -215,7 +215,7 @@ if (isset($_POST['woospeed_save_settings']) && wp_verify_nonce($_POST['_wpnonce'
     </form>
 
     <!-- Data Management -->
-    <div class="ws-settings-section">
+    <div class="woospeed-settings-section">
         <h2>
             <span class="dashicons dashicons-database"></span>
             <?php _e('Data Management', 'woospeed-analytics'); ?>
@@ -263,15 +263,15 @@ if (isset($_POST['woospeed_save_settings']) && wp_verify_nonce($_POST['_wpnonce'
     </div>
 
     <!-- Developer Tools -->
-    <div class="ws-settings-section ws-dev-tools">
-        <h2 class="ws-dev-tools-header"
+    <div class="woospeed-settings-section ws-dev-tools">
+        <h2 class="woospeed-dev-tools-header"
             onclick="document.getElementById('ws-dev-tools-content').classList.toggle('ws-hidden');">
             <span class="dashicons dashicons-code-standards"></span>
             <?php _e('Developer Tools', 'woospeed-analytics'); ?>
             <span class="dashicons dashicons-arrow-down-alt2" style="float:right;"></span>
         </h2>
 
-        <div id="ws-dev-tools-content" class="ws-hidden">
+        <div id="woospeed-dev-tools-content" class="woospeed-hidden">
             <p class="description" style="color: #d63638; margin-bottom: 20px;">
                 ⚠️
                 <?php _e('These tools are for development and testing purposes only. Use with caution in production environments.', 'woospeed-analytics'); ?>

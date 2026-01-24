@@ -196,7 +196,7 @@ class WooSpeed_Admin
      */
     public function render_dashboard_page(): void
     {
-        include WS_PLUGIN_DIR . 'admin/partials/ws-dashboard-view.php';
+        include WS_PLUGIN_DIR . 'admin/partials/woospeed-dashboard-view.php';
     }
 
     /**
@@ -206,7 +206,7 @@ class WooSpeed_Admin
      */
     public function render_settings_page(): void
     {
-        include WS_PLUGIN_DIR . 'admin/partials/ws-settings-view.php';
+        include WS_PLUGIN_DIR . 'admin/partials/woospeed-settings-view.php';
     }
 
     /**
@@ -216,7 +216,7 @@ class WooSpeed_Admin
      */
     public function render_migration_page(): void
     {
-        include WS_PLUGIN_DIR . 'admin/partials/ws-migration-view.php';
+        include WS_PLUGIN_DIR . 'admin/partials/woospeed-migration-view.php';
     }
 
     /**
@@ -226,7 +226,7 @@ class WooSpeed_Admin
      */
     public function render_generator_page(): void
     {
-        include WS_PLUGIN_DIR . 'admin/partials/ws-generator-view.php';
+        include WS_PLUGIN_DIR . 'admin/partials/woospeed-generator-view.php';
     }
 
     /**
