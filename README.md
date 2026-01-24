@@ -4,7 +4,7 @@
 
 **High-performance WooCommerce analytics engine with Flat Table architecture**
 
-[![CI/CD](https://github.com/carlosindriago/woospeed-analytics/actions/workflows/ci.yml/badge.svg)](https://github.com/carlosindriago/woospeed-analytics/actions/workflows/ci.yml)
+[![CI/CD](https://github.com/carlosindriago/woospeed/actions/workflows/ci.yml/badge.svg)](https://github.com/carlosindriago/woospeed/actions/workflows/ci.yml)
 [![PHPStan](https://img.shields.io/badge/PHPStan-Level%209-brightgreen)](https://phpstan.org/)
 [![PHPUnit](https://img.shields.io/badge/PHPUnit-10.x-blue)](https://phpunit.de/)
 [![License](https://img.shields.io/badge/license-GPL%20v2.0-blue)](LICENSE)
