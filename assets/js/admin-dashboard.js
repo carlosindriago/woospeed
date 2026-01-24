@@ -93,7 +93,7 @@ class WooSpeedDashboard {
 
         // Close on outside click
         document.addEventListener('click', (e) => {
-            if (!e.target.closest('.ws-date-picker')) {
+            if (!e.target.closest('.woospeed-date-picker')) {
                 trigger.classList.remove('active');
                 dropdown.classList.remove('open');
             }
@@ -121,7 +121,7 @@ class WooSpeedDashboard {
     }
 
     #setupDatePickerTabs() {
-        const tabs = document.querySelectorAll('.ws-date-tab');
+        const tabs = document.querySelectorAll('.woospeed-date-tab');
 
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
@@ -138,7 +138,7 @@ class WooSpeedDashboard {
     }
 
     #setupPresetButtons() {
-        const presetBtns = document.querySelectorAll('.ws-preset-btn');
+        const presetBtns = document.querySelectorAll('.woospeed-preset-btn');
         const customStart = document.getElementById('ws-custom-start');
         const customEnd = document.getElementById('ws-custom-end');
 

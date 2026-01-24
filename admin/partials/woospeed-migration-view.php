@@ -23,8 +23,8 @@ $percent = $total > 0 ? round(($migrated / $total) * 100) : 0;
     </h1>
 
     <?php if ($status === 'completed'): ?>
-        <div class="ws-migration-success">
-            <div class="ws-success-icon">✅</div>
+        <div class="woospeed-migration-success">
+            <div class="woospeed-success-icon">✅</div>
             <h2>
                 <?php _e('Migration Complete!', 'woospeed-analytics'); ?>
             </h2>
@@ -35,7 +35,7 @@ $percent = $total > 0 ? round(($migrated / $total) * 100) : 0;
                 ); ?>
             </p>
             <?php if ($errors > 0): ?>
-                <p class="ws-warning">
+                <p class="woospeed-warning">
                     <?php printf(__('%s orders had errors and were skipped.', 'woospeed-analytics'), $errors); ?>
                 </p>
             <?php endif; ?>
@@ -45,8 +45,8 @@ $percent = $total > 0 ? round(($migrated / $total) * 100) : 0;
         </div>
 
     <?php elseif ($status === 'not_needed'): ?>
-        <div class="ws-migration-info">
-            <div class="ws-info-icon">ℹ️</div>
+        <div class="woospeed-migration-info">
+            <div class="woospeed-info-icon">ℹ️</div>
             <h2>
                 <?php _e('No Migration Needed', 'woospeed-analytics'); ?>
             </h2>
@@ -60,8 +60,8 @@ $percent = $total > 0 ? round(($migrated / $total) * 100) : 0;
 
     <?php else: ?>
         <!-- Migration Panel -->
-        <div class="ws-migration-panel">
-            <div class="ws-migration-header">
+        <div class="woospeed-migration-panel">
+            <div class="woospeed-migration-header">
                 <h2>
                     <?php _e('Order Synchronization Required', 'woospeed-analytics'); ?>
                 </h2>
@@ -74,11 +74,11 @@ $percent = $total > 0 ? round(($migrated / $total) * 100) : 0;
             </div>
 
             <!-- Progress Section -->
-            <div class="ws-migration-progress" id="migration-progress">
-                <div class="ws-progress-bar-container">
-                    <div class="ws-progress-bar" id="progress-bar" style="width: <?php echo $percent; ?>%"></div>
+            <div class="woospeed-migration-progress" id="migration-progress">
+                <div class="woospeed-progress-bar-container">
+                    <div class="woospeed-progress-bar" id="progress-bar" style="width: <?php echo $percent; ?>%"></div>
                 </div>
-                <div class="ws-progress-stats">
+                <div class="woospeed-progress-stats">
                     <span id="progress-text">
                         <?php echo $percent; ?>%
                     </span>
@@ -90,19 +90,19 @@ $percent = $total > 0 ? round(($migrated / $total) * 100) : 0;
             </div>
 
             <!-- Status Messages -->
-            <div class="ws-migration-status" id="migration-status">
-                <div class="ws-status-message" id="status-message">
+            <div class="woospeed-migration-status" id="migration-status">
+                <div class="woospeed-status-message" id="status-message">
                     <?php if ($status === 'in_progress'): ?>
                         <?php _e('Migration in progress...', 'woospeed-analytics'); ?>
                     <?php else: ?>
                         <?php _e('Ready to start migration.', 'woospeed-analytics'); ?>
                     <?php endif; ?>
                 </div>
-                <div class="ws-status-details" id="status-details"></div>
+                <div class="woospeed-status-details" id="status-details"></div>
             </div>
 
             <!-- Error Display -->
-            <div class="ws-migration-errors" id="migration-errors" style="display: none;">
+            <div class="woospeed-migration-errors" id="migration-errors" style="display: none;">
                 <h4>
                     <?php _e('Errors', 'woospeed-analytics'); ?>
                 </h4>
@@ -110,7 +110,7 @@ $percent = $total > 0 ? round(($migrated / $total) * 100) : 0;
             </div>
 
             <!-- Controls -->
-            <div class="ws-migration-controls">
+            <div class="woospeed-migration-controls">
                 <button type="button" id="btn-start-migration" class="button button-primary button-hero" <?php echo $status === 'in_progress' ? 'disabled' : ''; ?>>
                     <?php echo $status === 'in_progress' ? __('Migration in Progress...', 'woospeed-analytics') : __('Start Migration', 'woospeed-analytics'); ?>
                 </button>
@@ -119,7 +119,7 @@ $percent = $total > 0 ? round(($migrated / $total) * 100) : 0;
                 </button>
             </div>
 
-            <div class="ws-migration-info-box">
+            <div class="woospeed-migration-info-box">
                 <p><strong>
                         <?php _e('What happens during migration?', 'woospeed-analytics'); ?>
                     </strong></p>
