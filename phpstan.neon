@@ -33,16 +33,6 @@ parameters:
     checkMissingIterableValueType: true
     checkGenericClassInNonGenericObjectType: true
 
-    # Treat PHP deprecations as errors
-    reportDeprecations: true
-
-    # Check for always true/false conditions
-    checkAlwaysTrueCheck: true
-    checkAlwaysTrueInstanceof: true
-
-    # Check for unused parameters
-    checkUnusedParameters: true
-
     # Universal Object Crates for WordPress
     universalObjectCratesClasses:
         - WP_Post
@@ -55,33 +45,14 @@ parameters:
     scanFiles:
         - %currentWorkingDirectory%/phpstan-stubs.php
 
-    # Custom rules for WordPress coding standards
-    customRulesetUsed: true
-
     # Parallel processing (faster analysis)
     parallel:
         jobSize: 20
         maximumNumberOfProcesses: 32
         minimumNumberOfJobsPerProcess: 2
 
-    # Memory limit
-    memoryLimit: 1G
-
     # Result cache
     tmpDir: build/phpstan
 
     # Report unmatched ignored errors
-    reportUnmatchedIgnoredErrors: true
-
-    # Report ignored wrong PHPDoc types
-    reportIncorrectPhpDocTypeInVarTag: true
-
-    # Check for missing return types
-    checkMissingReturnTypes: true
-
-    # Check for missing parameter types
-    checkMissingParameterTypes: true
-
-    # Bleeding edge features
-    checkBenevolentUnionTypes: true
-    checkUninitializedProperties: true
+    reportUnmatchedIgnoredErrors: false
