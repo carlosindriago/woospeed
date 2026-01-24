@@ -28,7 +28,7 @@ jobs:
               run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
 
             - name: Cache Composer dependencies
-              uses: actions/cache@v3
+              uses: actions/cache@v4
               with:
                   path: ${{ steps.composer-cache.outputs.dir }}
                   key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
@@ -43,7 +43,7 @@ jobs:
 
             - name: Upload PHPStan results
               if: always()
-              uses: actions/upload-artifact@v3
+              uses: actions/upload-artifact@v4
               with:
                   name: phpstan-results
                   path: build/phpstan/
@@ -79,7 +79,7 @@ jobs:
               run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
 
             - name: Cache Composer dependencies
-              uses: actions/cache@v3
+              uses: actions/cache@v4
               with:
                   path: ${{ steps.composer-cache.outputs.dir }}
                   key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
@@ -99,7 +99,7 @@ jobs:
               run: composer test:ci
 
             - name: Upload coverage to Codecov
-              uses: codecov/codecov-action@v3
+              uses: codecov/codecov-action@v5
               with:
                   file: ./coverage/clover.xml
                   flags: unittests
@@ -107,7 +107,7 @@ jobs:
 
             - name: Upload coverage reports
               if: always()
-              uses: actions/upload-artifact@v3
+              uses: actions/upload-artifact@v4
               with:
                   name: coverage-report
                   path: coverage/
@@ -181,7 +181,7 @@ jobs:
 
             - name: Upload Playwright report
               if: always()
-              uses: actions/upload-artifact@v3
+              uses: actions/upload-artifact@v4
               with:
                   name: playwright-report
                   path: playwright-report/
@@ -206,7 +206,7 @@ jobs:
               run: composer install --prefer-dist --no-progress --no-interaction
 
             - name: Run PHPCS
-              run: composer cs
+              run: vendor/bin/phpcs --standard=WordPress includes/ woospeed-analytics.php
 
     compatibility:
         name: PHP Compatibility Check
@@ -226,4 +226,4 @@ jobs:
               run: composer install --prefer-dist --no-progress --no-interaction
 
             - name: Run PHPCompatibilityWP
-              run: vendor/bin/phpcs --standard=PHPCompatibilityWP --runtime-set testVersion 8.1
+              run: vendor/bin/phpcs --standard=PHPCompatibilityWP --runtime-set testVersion 8.1- includes/ woospeed-analytics.php
