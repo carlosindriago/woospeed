@@ -31,7 +31,13 @@
         <report>
             <html outputDirectory="coverage/html"/>
             <text outputFile="php://stdout" showOnlySummary="true"/>
+            <clover outputFile="coverage/clover.xml"/>
         </report>
+        <require>
+            <line percent="80"/>
+            <method percent="85"/>
+            <class percent="90"/>
+        </require>
     </coverage>
 
     <source>
