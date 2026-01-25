@@ -350,6 +350,25 @@ if (!function_exists('add_filter')) {
     }
 }
 
+if (!class_exists('WP_Post')) {
+    /**
+     * Mock WP_Post class for static analysis.
+     */
+    class WP_Post
+    {
+        /** @var int */
+        public $ID = 0;
+        /** @var string */
+        public $post_title = '';
+        /** @var string */
+        public $post_content = '';
+        /** @var string */
+        public $post_status = '';
+        /** @var string */
+        public $post_type = '';
+    }
+}
+
 if (!function_exists('wp_delete_post')) {
     /**
      * Trash or delete a post or page.
